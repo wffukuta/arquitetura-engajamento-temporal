@@ -266,85 +266,99 @@ const pointer = {
   targetY: window.innerHeight / 2
 };
 
-const mesh = {
-  spacing: 70,
-  influenceRadius: 260,
-  maxOffset: 22,
-  points: []
-};
+const gradientBlobs = [
+  {
+    color: '88, 166, 255',
+    xFactor: 0.22,
+    yFactor: 0.24,
+    radiusFactor: 0.48,
+    parallax: 0.035,
+    pulse: 0.18,
+    speed: 0.00035
+  },
+  {
+    color: '123, 92, 255',
+    xFactor: 0.74,
+    yFactor: 0.3,
+    radiusFactor: 0.44,
+    parallax: 0.03,
+    pulse: 0.14,
+    speed: 0.00028
+  },
+  {
+    color: '32, 201, 151',
+    xFactor: 0.5,
+    yFactor: 0.78,
+    radiusFactor: 0.42,
+    parallax: 0.025,
+    pulse: 0.12,
+    speed: 0.00024
+  }
+];
 
 function resizeMeshCanvas() {
   meshCanvas.width = window.innerWidth;
   meshCanvas.height = window.innerHeight;
-
-  mesh.points = [];
-  const cols = Math.ceil(meshCanvas.width / mesh.spacing) + 1;
-  const rows = Math.ceil(meshCanvas.height / mesh.spacing) + 1;
-
-  for (let row = 0; row < rows; row += 1) {
-    for (let col = 0; col < cols; col += 1) {
-      const x = col * mesh.spacing;
-      const y = row * mesh.spacing;
-      mesh.points.push({
-        x,
-        y,
-        baseX: x,
-        baseY: y,
-        z: Math.random() * 0.8 + 0.2
-      });
-    }
-  }
 }
 
-function drawMesh() {
-  pointer.x += (pointer.targetX - pointer.x) * 0.06;
-  pointer.y += (pointer.targetY - pointer.y) * 0.06;
+function drawMeshGradient(now = 0) {
+  pointer.x += (pointer.targetX - pointer.x) * 0.045;
+  pointer.y += (pointer.targetY - pointer.y) * 0.045;
 
-  meshCtx.clearRect(0, 0, meshCanvas.width, meshCanvas.height);
+  const width = meshCanvas.width;
+  const height = meshCanvas.height;
 
-  for (const point of mesh.points) {
-    const dx = pointer.x - point.baseX;
-    const dy = pointer.y - point.baseY;
-    const dist = Math.hypot(dx, dy);
-    const strength = Math.max(0, 1 - dist / mesh.influenceRadius);
-    const offset = mesh.maxOffset * strength * point.z;
+  meshCtx.clearRect(0, 0, width, height);
 
-    const angle = Math.atan2(dy, dx);
-    point.x = point.baseX - Math.cos(angle) * offset;
-    point.y = point.baseY - Math.sin(angle) * offset;
+  const baseGradient = meshCtx.createLinearGradient(0, 0, width, height);
+  baseGradient.addColorStop(0, '#070b12');
+  baseGradient.addColorStop(0.55, '#0d1117');
+  baseGradient.addColorStop(1, '#05070d');
+  meshCtx.fillStyle = baseGradient;
+  meshCtx.fillRect(0, 0, width, height);
+
+  const nx = (pointer.x / Math.max(1, width) - 0.5) * 2;
+  const ny = (pointer.y / Math.max(1, height) - 0.5) * 2;
+
+  for (const blob of gradientBlobs) {
+    const oscillation = 1 + Math.sin(now * blob.speed) * blob.pulse;
+    const centerX = width * blob.xFactor + nx * width * blob.parallax;
+    const centerY = height * blob.yFactor + ny * height * blob.parallax;
+    const radius = Math.max(width, height) * blob.radiusFactor * oscillation;
+
+    const radial = meshCtx.createRadialGradient(
+      centerX,
+      centerY,
+      radius * 0.06,
+      centerX,
+      centerY,
+      radius
+    );
+
+    radial.addColorStop(0, `rgba(${blob.color}, 0.22)`);
+    radial.addColorStop(0.35, `rgba(${blob.color}, 0.12)`);
+    radial.addColorStop(1, `rgba(${blob.color}, 0)`);
+
+    meshCtx.globalCompositeOperation = 'lighter';
+    meshCtx.fillStyle = radial;
+    meshCtx.fillRect(0, 0, width, height);
   }
 
-  meshCtx.lineWidth = 1;
-  const cols = Math.ceil(meshCanvas.width / mesh.spacing) + 1;
+  meshCtx.globalCompositeOperation = 'source-over';
+  const vignette = meshCtx.createRadialGradient(
+    width * 0.5,
+    height * 0.5,
+    Math.min(width, height) * 0.2,
+    width * 0.5,
+    height * 0.5,
+    Math.max(width, height) * 0.75
+  );
+  vignette.addColorStop(0, 'rgba(13, 17, 23, 0)');
+  vignette.addColorStop(1, 'rgba(2, 4, 8, 0.62)');
+  meshCtx.fillStyle = vignette;
+  meshCtx.fillRect(0, 0, width, height);
 
-  for (let index = 0; index < mesh.points.length; index += 1) {
-    const point = mesh.points[index];
-    const right = mesh.points[index + 1];
-    const bottom = mesh.points[index + cols];
-
-    if (right && (index + 1) % cols !== 0) {
-      meshCtx.strokeStyle = `rgba(88, 166, 255, ${0.1 + point.z * 0.25})`;
-      meshCtx.beginPath();
-      meshCtx.moveTo(point.x, point.y);
-      meshCtx.lineTo(right.x, right.y);
-      meshCtx.stroke();
-    }
-
-    if (bottom) {
-      meshCtx.strokeStyle = `rgba(88, 166, 255, ${0.08 + point.z * 0.2})`;
-      meshCtx.beginPath();
-      meshCtx.moveTo(point.x, point.y);
-      meshCtx.lineTo(bottom.x, bottom.y);
-      meshCtx.stroke();
-    }
-
-    meshCtx.fillStyle = `rgba(201, 209, 217, ${0.15 + point.z * 0.5})`;
-    meshCtx.beginPath();
-    meshCtx.arc(point.x, point.y, 1 + point.z * 1.1, 0, Math.PI * 2);
-    meshCtx.fill();
-  }
-
-  requestAnimationFrame(drawMesh);
+  requestAnimationFrame(drawMeshGradient);
 }
 
 window.addEventListener('pointermove', event => {
@@ -355,29 +369,29 @@ window.addEventListener('pointermove', event => {
 window.addEventListener('resize', resizeMeshCanvas);
 
 resizeMeshCanvas();
-drawMesh();
+drawMeshGradient();
 
-  // Função para gerenciar o redirecionamento
-  function redirectByHash() {
-    const hash = window.location.hash;
+// Função para gerenciar o redirecionamento
+function redirectByHash() {
+  const hash = window.location.hash;
 
-    // Mapeamento de destinos
-    const routes = {
-      '#github': 'https://www.google.com',
-      '#vinhadinho': 'https://www.facebook.com'
-    };
+  // Mapeamento de destinos
+  const routes = {
+    '#github': 'https://www.google.com',
+    '#vinhadinho': 'https://www.facebook.com'
+  };
 
-    // Verifica se o hash atual existe no nosso mapeamento
-    if (routes[hash]) {
-      window.location.href = routes[hash];
-    }
+  // Verifica se o hash atual existe no nosso mapeamento
+  if (routes[hash]) {
+    window.location.href = routes[hash];
   }
+}
 
-  // Executa assim que a página carrega
-  window.addEventListener('load', redirectByHash);
+// Executa assim que a página carrega
+window.addEventListener('load', redirectByHash);
 
-  // Opcional: Executa se o usuário mudar o hash sem recarregar a página
-  window.addEventListener('hashchange', redirectByHash);
+// Opcional: Executa se o usuário mudar o hash sem recarregar a página
+window.addEventListener('hashchange', redirectByHash);
 </script>
 
 
