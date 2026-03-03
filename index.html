@@ -869,7 +869,39 @@ const chatForm = document.getElementById('chat-form');
 const chatInput = document.getElementById('chat-input');
 const chatSend = document.getElementById('chat-send');
 
-const messagesRef = ref(database, 'contactChat/messages');
+let messagesRef = null;
+let stopListeningMessages = null;
+
+function escutarMensagens(nodeRef) {
+  if (stopListeningMessages) {
+    stopListeningMessages();
+  }
+
+  stopListeningMessages = onValue(nodeRef, snapshot => {
+    const data = snapshot.val() || {};
+    const messages = Object.values(data).sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+    chatMessages.innerHTML = '';
+
+    if (!messages.length) {
+      chatMessages.innerHTML = '<div class="chat-message">Inicie uma conversa direta comigo!</div>';
+      return;
+    }
+
+    messages.slice(-60).forEach(message => {
+      const row = document.createElement('div');
+      row.className = 'chat-message';
+      const author = document.createElement('span');
+      author.className = 'chat-message__author';
+      author.textContent = message.author || 'Visitante';
+      const text = document.createElement('div');
+      text.textContent = message.text || '';
+      row.append(author, text);
+      chatMessages.appendChild(row);
+    });
+
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  });
+}
 
 chatToggle.addEventListener('click', () => {
   const open = !chatWidget.classList.contains('open');
@@ -893,39 +925,22 @@ chatLogout.addEventListener('click', async () => {
   await signOut(auth);
 });
 
-onValue(messagesRef, snapshot => {
-  const data = snapshot.val() || {};
-  const messages = Object.values(data).sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
-  chatMessages.innerHTML = '';
-
-  if (!messages.length) {
-    chatMessages.innerHTML = '<div class="chat-message">Nenhuma mensagem ainda.</div>';
-    return;
-  }
-
-  messages.slice(-60).forEach(message => {
-    const row = document.createElement('div');
-    row.className = 'chat-message';
-    const author = document.createElement('span');
-    author.className = 'chat-message__author';
-    author.textContent = message.author || 'Visitante';
-    const text = document.createElement('div');
-    text.textContent = message.text || '';
-    row.append(author, text);
-    chatMessages.appendChild(row);
-  });
-
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-});
-
 onAuthStateChanged(auth, user => {
   if (user) {
     chatStatus.textContent = `Conectado como ${user.displayName || user.email || 'usuário'}`;
+    messagesRef = ref(database, `chats/${user.uid}`);
+    escutarMensagens(messagesRef);
     chatLogin.hidden = true;
     chatLogout.hidden = false;
     chatInput.disabled = false;
     chatSend.disabled = false;
   } else {
+    if (stopListeningMessages) {
+      stopListeningMessages();
+      stopListeningMessages = null;
+    }
+    messagesRef = null;
+    chatMessages.innerHTML = '<div class="chat-message">Faça login com Google para acessar a conversa de contato.</div>';
     chatStatus.textContent = 'Desconectado';
     chatLogin.hidden = false;
     chatLogout.hidden = true;
@@ -939,7 +954,7 @@ chatForm.addEventListener('submit', async event => {
 
   const user = auth.currentUser;
   const text = chatInput.value.trim();
-  if (!user || !text) return;
+  if (!user || !text || !messagesRef) return;
 
   await push(messagesRef, {
     author: user.displayName || user.email || 'Visitante',
