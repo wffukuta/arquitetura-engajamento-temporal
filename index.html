@@ -263,36 +263,117 @@ const pointer = {
   x: window.innerWidth / 2,
   y: window.innerHeight / 2,
   targetX: window.innerWidth / 2,
-  targetY: window.innerHeight / 2
+  targetY: window.innerHeight / 2,
+  vx: 0,
+  vy: 0
 };
 
 const gradientBlobs = [
   {
     color: '88, 166, 255',
-    xFactor: 0.22,
+    xFactor: 0.2,
     yFactor: 0.24,
-    radiusFactor: 0.48,
-    parallax: 0.035,
-    pulse: 0.18,
-    speed: 0.00035
+    radiusFactor: 0.5,
+    parallax: 0.04,
+    pulse: 0.16,
+    speed: 0.0003,
+    swirl: 34,
+    swirlSpeed: 0.00024,
+    phase: 0.7
   },
   {
     color: '123, 92, 255',
     xFactor: 0.74,
-    yFactor: 0.3,
-    radiusFactor: 0.44,
-    parallax: 0.03,
+    yFactor: 0.32,
+    radiusFactor: 0.45,
+    parallax: 0.036,
     pulse: 0.14,
-    speed: 0.00028
+    speed: 0.00026,
+    swirl: 28,
+    swirlSpeed: 0.0002,
+    phase: 1.8
   },
   {
     color: '32, 201, 151',
-    xFactor: 0.5,
-    yFactor: 0.78,
-    radiusFactor: 0.42,
-    parallax: 0.025,
+    xFactor: 0.52,
+    yFactor: 0.8,
+    radiusFactor: 0.43,
+    parallax: 0.03,
     pulse: 0.12,
-    speed: 0.00024
+    speed: 0.00022,
+    swirl: 24,
+    swirlSpeed: 0.00018,
+    phase: 2.9
+  }
+];
+
+function resizeMeshCanvas() {
+  meshCanvas.width = window.innerWidth;
+  meshCanvas.height = window.innerHeight;
+}
+
+function updatePointerMotion() {
+  const spring = 0.02;
+  const damping = 0.86;
+
+  pointer.vx += (pointer.targetX - pointer.x) * spring;
+  pointer.vy += (pointer.targetY - pointer.y) * spring;
+
+  pointer.vx *= damping;
+  pointer.vy *= damping;
+
+  pointer.x += pointer.vx;
+  pointer.y += pointer.vy;
+}
+
+function drawMeshGradient(now = 0) {
+  updatePointerMotion();
+
+  const width = meshCanvas.width;
+  const height = meshCanvas.height;
+  const largestSide = Math.max(width, height);
+
+  meshCtx.clearRect(0, 0, width, height);
+
+  const baseGradient = meshCtx.createLinearGradient(0, 0, width, height);
+  baseGradient.addColorStop(0, '#060a11');
+  baseGradient.addColorStop(0.55, '#0d1117');
+  baseGradient.addColorStop(1, '#04060d');
+  meshCtx.fillStyle = baseGradient;
+  meshCtx.fillRect(0, 0, width, height);
+
+  const nx = (pointer.x / Math.max(1, width) - 0.5) * 2;
+  const ny = (pointer.y / Math.max(1, height) - 0.5) * 2;
+  const velocity = Math.min(1, Math.hypot(pointer.vx, pointer.vy) / 20);
+
+  meshCtx.globalCompositeOperation = 'lighter';
+
+  for (const blob of gradientBlobs) {
+    const pulseWave = 1 + Math.sin(now * blob.speed + blob.phase) * blob.pulse;
+    const swirlX = Math.cos(now * blob.swirlSpeed + blob.phase) * blob.swirl;
+    const swirlY = Math.sin(now * blob.swirlSpeed + blob.phase * 1.4) * blob.swirl;
+    const velocityPushX = pointer.vx * (18 + blob.swirl * 0.2);
+    const velocityPushY = pointer.vy * (18 + blob.swirl * 0.2);
+
+    const centerX = width * blob.xFactor + nx * width * blob.parallax + swirlX + velocityPushX;
+    const centerY = height * blob.yFactor + ny * height * blob.parallax + swirlY + velocityPushY;
+    const radius = largestSide * blob.radiusFactor * pulseWave * (1 + velocity * 0.08);
+
+    const radial = meshCtx.createRadialGradient(
+      centerX,
+      centerY,
+      radius * 0.05,
+      centerX,
+      centerY,
+      radius
+    );
+
+    radial.addColorStop(0, `rgba(${blob.color}, ${0.21 + velocity * 0.08})`);
+    radial.addColorStop(0.4, `rgba(${blob.color}, ${0.11 + velocity * 0.04})`);
+    radial.addColorStop(1, `rgba(${blob.color}, 0)`);
+
+    meshCtx.fillStyle = radial;
+    meshCtx.fillRect(0, 0, width, height);
   }
 ];
 
@@ -355,6 +436,57 @@ function drawMeshGradient(now = 0) {
   );
   vignette.addColorStop(0, 'rgba(13, 17, 23, 0)');
   vignette.addColorStop(1, 'rgba(2, 4, 8, 0.62)');
+  meshCtx.fillStyle = vignette;
+  meshCtx.fillRect(0, 0, width, height);
+
+  requestAnimationFrame(drawMeshGradient);
+}
+
+window.addEventListener('pointermove', event => {
+  pointer.targetX = event.clientX;
+  pointer.targetY = event.clientY;
+});
+
+window.addEventListener('resize', resizeMeshCanvas);
+
+resizeMeshCanvas();
+drawMeshGradient();
+
+// Função para gerenciar o redirecionamento
+function redirectByHash() {
+  const hash = window.location.hash;
+
+  // Mapeamento de destinos
+  const routes = {
+    '#github': 'https://www.google.com',
+    '#vinhadinho': 'https://www.facebook.com'
+  };
+
+  // Verifica se o hash atual existe no nosso mapeamento
+  if (routes[hash]) {
+    window.location.href = routes[hash];
+  }
+}
+
+  meshCtx.globalCompositeOperation = 'source-over';
+
+  const softFog = meshCtx.createLinearGradient(0, 0, width, height);
+  softFog.addColorStop(0, 'rgba(13, 17, 23, 0.08)');
+  softFog.addColorStop(0.5, 'rgba(13, 17, 23, 0.02)');
+  softFog.addColorStop(1, 'rgba(5, 8, 14, 0.18)');
+  meshCtx.fillStyle = softFog;
+  meshCtx.fillRect(0, 0, width, height);
+
+  const vignette = meshCtx.createRadialGradient(
+    width * 0.5,
+    height * 0.5,
+    Math.min(width, height) * 0.18,
+    width * 0.5,
+    height * 0.5,
+    largestSide * 0.78
+  );
+  vignette.addColorStop(0, 'rgba(13, 17, 23, 0)');
+  vignette.addColorStop(1, 'rgba(2, 4, 8, 0.65)');
   meshCtx.fillStyle = vignette;
   meshCtx.fillRect(0, 0, width, height);
 
