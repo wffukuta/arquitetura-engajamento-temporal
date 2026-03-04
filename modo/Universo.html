@@ -1,24 +1,28 @@
 <script>
   (function() {
-    // 1. Parar e esconder o Mesh Gradient (Canvas)
+    // 1. Reativar e ajustar o Canvas (Nebulosa)
     const canvas = document.getElementById('mesh-bg');
     if (canvas) {
-      canvas.style.display = 'none';
+      canvas.style.display = 'block';
+      canvas.style.opacity = '0.8'; // Deixa as cores da nebulosa mais vibrantes
     }
 
-    // 2. Definir as novas variáveis de cor (Estilo E-Ink)
+    // 2. Variáveis de Ambiente Espacial
     const root = document.documentElement;
-    root.style.setProperty('--bg-body', '#f2f2f2'); // Cinza bem claro "papel"
-    root.style.setProperty('--bg-card', '#ffffff'); // Branco puro para os cards
-    root.style.setProperty('--border-color', '#000000'); // Bordas pretas sólidas
-    root.style.setProperty('--text-main', '#1a1a1a'); // Texto quase preto
-    root.style.setProperty('--text-muted', '#444444');
-    root.style.setProperty('--link-color', '#000000'); // Links pretos (estilo jornal)
+    root.style.setProperty('--bg-body', '#020617'); // Preto azulado profundo
+    root.style.setProperty('--bg-card', 'rgba(15, 23, 42, 0.7)'); // Vidro escuro
+    root.style.setProperty('--border-color', 'rgba(255, 255, 255, 0.1)');
+    root.style.setProperty('--text-main', '#f1f5f9'); // Branco estelar
+    root.style.setProperty('--text-muted', '#94a3b8');
+    root.style.setProperty('--link-color', '#38bdf8'); // Azul ciano brilhante
 
-    // 3. Injetar estilos globais para mudar fontes e remover efeitos modernos
-    const styleId = 'kindle-theme-overrides';
+    // 3. Injetar o CSS de imersão estelar
+    const styleId = 'universe-theme-overrides';
+    // Remove o estilo do tema anterior se existir
+    const oldStyle = document.getElementById('kindle-theme-overrides');
+    if (oldStyle) oldStyle.remove();
+
     let styleTag = document.getElementById(styleId);
-    
     if (!styleTag) {
       styleTag = document.createElement('style');
       styleTag.id = styleId;
@@ -26,87 +30,94 @@
     }
 
     styleTag.innerHTML = `
-      @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&display=swap');
 
       body {
-        font-family: 'Crimson Pro', 'Georgia', serif !important;
-        background-image: radial-gradient(#d1d1d1 1px, transparent 1px); /* Textura leve de papel */
-        background-size: 20px 20px;
+        font-family: 'Space Grotesk', sans-serif !important;
+        background-image: 
+          radial-gradient(circle at 20% 30%, rgba(56, 189, 248, 0.05) 0%, transparent 40%),
+          radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.05) 0%, transparent 40%);
+        background-attachment: fixed;
       }
 
       header {
-        background-color: #ffffff !important;
-        border-bottom: 4px solid #000000 !important;
-        backdrop-filter: none !important;
-        box-shadow: none !important;
+        background: rgba(2, 6, 23, 0.4) !important;
+        border-bottom: 1px solid rgba(56, 189, 248, 0.3) !important;
+        backdrop-filter: blur(12px) !important;
       }
 
-      h1, h2, h3 {
-        font-weight: 700;
+      h1 {
         text-transform: uppercase;
-        letter-spacing: 1px;
+        letter-spacing: 4px;
+        background: linear-gradient(to right, #fff, #38bdf8);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 700;
       }
 
+      /* Cards com efeito HUD Espacial */
       .about, .card {
-        border: 2px solid #000000 !important;
-        border-radius: 0px !important; /* Estilo mais seco/quadrado */
-        box-shadow: 4px 4px 0px #000000 !important; /* Sombra sólida "cartoon/sketch" */
-        transition: transform 0.1s;
+        backdrop-filter: blur(16px) !important;
+        border-radius: 12px !important;
+        background: rgba(30, 41, 59, 0.5) !important;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8) !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       }
 
       .card:hover {
-        transform: translate(-2px, -2px);
-        box-shadow: 6px 6px 0px #000000 !important;
+        transform: translateY(-5px) scale(1.02);
+        background: rgba(30, 41, 59, 0.8) !important;
       }
 
-      .card--suporte-sim { border: 6px solid #000000 !important; }
-      .card--suporte-nao { border: 2px dashed #000000 !important; }
-      .card--suporte-em-breve { border: 2px solid #666666 !important; }
+      /* Glow das Bordas conforme solicitado */
+      .card--suporte-sim {
+        border: 2px solid #0ea5e9 !important;
+        box-shadow: 0 0 15px rgba(14, 165, 233, 0.3) !important;
+      }
 
-      .project-link, .video-link {
-        background: #000000 !important;
-        color: #ffffff !important;
-        border-radius: 0px !important;
-        border: 1px solid #000000 !important;
+      .card--suporte-nao {
+        border: 2px solid #ef4444 !important;
+        box-shadow: 0 0 15px rgba(239, 68, 68, 0.3) !important;
+      }
+
+      .card--suporte-em-breve {
+        border: 2px solid #f59e0b !important;
+        box-shadow: 0 0 15px rgba(245, 158, 11, 0.3) !important;
+      }
+
+      /* Botões Futuristas */
+      .project-link {
+        background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%) !important;
+        color: #fff !important;
+        border: none !important;
+        box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4) !important;
         text-transform: uppercase;
-        font-weight: bold;
+        font-weight: 700;
       }
 
-      .project-link:hover, .video-link:hover {
-        background: #444444 !important;
+      .video-link {
+        background: rgba(255, 255, 255, 0.1) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        color: #fff !important;
       }
 
-      /* Chat Widget estilo Kindle */
+      .video-link:hover {
+        background: #38bdf8 !important;
+        color: #020617 !important;
+      }
+
+      /* Chat Widget estilo Nave */
       .chat-widget {
-        border-radius: 0px !important;
-        border: 2px solid #000000 !important;
-        background: #ffffff !important;
-        box-shadow: 4px 4px 0px #000000 !important;
+        border: 1px solid rgba(56, 189, 248, 0.4) !important;
+        background: rgba(15, 23, 42, 0.9) !important;
       }
 
       .chat-toggle {
-        border-radius: 0px !important;
-        background: #000000 !important;
-      }
-
-      .chat-header {
-        background: #000000 !important;
-        color: #ffffff !important;
-      }
-
-      .chat-message {
-        border-radius: 0px !important;
-        border: 1px solid #000000 !important;
-        background: #f9f9f9 !important;
-      }
-
-      /* Esconder brilhos e efeitos neon */
-      .video-modal {
-        box-shadow: 10px 10px 0px #000000 !important;
-        border: 3px solid #000000 !important;
+        background: #38bdf8 !important;
+        box-shadow: 0 0 20px rgba(56, 189, 248, 0.5) !important;
       }
     `;
 
-    console.log("Modo Kindle Ativado: Leitura clara e design minimalista.");
+    console.log("Modo Universo ativado: Explorando as estrelas...");
   })();
 </script>
