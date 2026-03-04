@@ -1,21 +1,18 @@
 <script>
   (function() {
-    // 1. Parar e esconder o Mesh Gradient (Canvas)
+    // 1. Esconde o Canvas de fundo (Mesh Gradient)
     const canvas = document.getElementById('mesh-bg');
-    if (canvas) {
-      canvas.style.display = 'none';
-    }
+    if (canvas) canvas.style.display = 'none';
 
-    // 2. Definir as novas variáveis de cor (Estilo E-Ink)
+    // 2. Configura as variáveis base de "Papel Eletrônico"
     const root = document.documentElement;
-    root.style.setProperty('--bg-body', '#f2f2f2'); // Cinza bem claro "papel"
-    root.style.setProperty('--bg-card', '#ffffff'); // Branco puro para os cards
-    root.style.setProperty('--border-color', '#000000'); // Bordas pretas sólidas
-    root.style.setProperty('--text-main', '#1a1a1a'); // Texto quase preto
-    root.style.setProperty('--text-muted', '#444444');
-    root.style.setProperty('--link-color', '#000000'); // Links pretos (estilo jornal)
+    root.style.setProperty('--bg-body', '#f0f0f0'); // Fundo cinza claro papel
+    root.style.setProperty('--bg-card', '#ffffff'); // Fundo dos cards branco
+    root.style.setProperty('--text-main', '#1a1a1a'); // Texto "tinta" preta
+    root.style.setProperty('--text-muted', '#4d4d4d');
+    root.style.setProperty('--link-color', '#003366'); // Azul marinho para links
 
-    // 3. Injetar estilos globais para mudar fontes e remover efeitos modernos
+    // 3. Injeta o CSS de estilo "Sketch / Kindle Color"
     const styleId = 'kindle-theme-overrides';
     let styleTag = document.getElementById(styleId);
     
@@ -26,87 +23,95 @@
     }
 
     styleTag.innerHTML = `
-      @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;700&display=swap');
 
       body {
-        font-family: 'Crimson Pro', 'Georgia', serif !important;
-        background-image: radial-gradient(#d1d1d1 1px, transparent 1px); /* Textura leve de papel */
-        background-size: 20px 20px;
+        font-family: 'Crimson Pro', serif !important;
+        background-image: 
+            linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px),
+            linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px);
+        background-size: 25px 25px; /* Textura de caderno/grade leve */
       }
 
       header {
-        background-color: #ffffff !important;
-        border-bottom: 4px solid #000000 !important;
-        backdrop-filter: none !important;
-        box-shadow: none !important;
-      }
-
-      h1, h2, h3 {
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-      }
-
-      .about, .card {
-        border: 2px solid #000000 !important;
-        border-radius: 0px !important; /* Estilo mais seco/quadrado */
-        box-shadow: 4px 4px 0px #000000 !important; /* Sombra sólida "cartoon/sketch" */
-        transition: transform 0.1s;
-      }
-
-      .card:hover {
-        transform: translate(-2px, -2px);
-        box-shadow: 6px 6px 0px #000000 !important;
-      }
-
-      .card--suporte-sim { border: 6px solid #000000 !important; }
-      .card--suporte-nao { border: 2px dashed #000000 !important; }
-      .card--suporte-em-breve { border: 2px solid #666666 !important; }
-
-      .project-link, .video-link {
-        background: #000000 !important;
-        color: #ffffff !important;
-        border-radius: 0px !important;
-        border: 1px solid #000000 !important;
-        text-transform: uppercase;
-        font-weight: bold;
-      }
-
-      .project-link:hover, .video-link:hover {
-        background: #444444 !important;
-      }
-
-      /* Chat Widget estilo Kindle */
-      .chat-widget {
-        border-radius: 0px !important;
-        border: 2px solid #000000 !important;
         background: #ffffff !important;
-        box-shadow: 4px 4px 0px #000000 !important;
+        border-bottom: 3px solid #000000 !important;
+        backdrop-filter: none !important;
+        padding: 40px 16px !important;
+      }
+
+      h1 {
+        font-weight: 700;
+        letter-spacing: -1px;
+        color: #000;
+      }
+
+      /* Estilo dos Cards - Sketch com Bordas Coloridas */
+      .about, .card {
+        border-radius: 2px !important;
+        box-shadow: 6px 6px 0px rgba(0,0,0,0.1) !important; /* Sombra sólida de desenho */
+        transition: all 0.2s ease;
+        background: #fff !important;
+      }
+
+      /* Cores de Suporte solicitadas (Azul, Amarelo, Vermelho) */
+      .card--suporte-sim {
+        border: 4px solid #2b6cb0 !important; /* Azul Sólido */
+      }
+
+      .card--suporte-nao {
+        border: 4px solid #c53030 !important; /* Vermelho Sólido */
+      }
+
+      .card--suporte-em-breve {
+        border: 4px solid #d69e2e !important; /* Amarelo/Dourado Sólido */
+      }
+
+      .about {
+        border: 2px solid #000 !important;
+      }
+
+      .about h2, .card h2 {
+        text-transform: uppercase;
+        font-size: 1.1rem;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 5px;
+      }
+
+      /* Botões em estilo bloco de desenho */
+      .project-link {
+        background: #000 !important;
+        color: #fff !important;
+        border-radius: 0px !important;
+        border: 2px solid #000 !important;
+        padding: 6px 15px !important;
+      }
+
+      .video-link {
+        background: #fff !important;
+        color: #000 !important;
+        border: 2px solid #000 !important;
+        border-radius: 0px !important;
+      }
+
+      .video-link:hover {
+        background: #000 !important;
+        color: #fff !important;
+      }
+
+      /* Ajuste do Chat */
+      .chat-widget {
+        border: 2px solid #000 !important;
+        border-radius: 0px !important;
+        box-shadow: 4px 4px 0px #000 !important;
       }
 
       .chat-toggle {
+        background: #000 !important;
         border-radius: 0px !important;
-        background: #000000 !important;
-      }
-
-      .chat-header {
-        background: #000000 !important;
-        color: #ffffff !important;
-      }
-
-      .chat-message {
-        border-radius: 0px !important;
-        border: 1px solid #000000 !important;
-        background: #f9f9f9 !important;
-      }
-
-      /* Esconder brilhos e efeitos neon */
-      .video-modal {
-        box-shadow: 10px 10px 0px #000000 !important;
-        border: 3px solid #000000 !important;
       }
     `;
 
-    console.log("Modo Kindle Ativado: Leitura clara e design minimalista.");
+    console.log("Modo Kindle Color ativado com sucesso.");
   })();
 </script>
