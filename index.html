@@ -448,9 +448,57 @@
       pointer-events: none;
     }
 
+    .glitch-transition {
+      position: fixed;
+      inset: 0;
+      z-index: 1500;
+      pointer-events: none;
+      opacity: 0;
+      mix-blend-mode: screen;
+      background:
+        repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0 2px, rgba(0, 0, 0, 0.08) 2px 4px),
+        linear-gradient(90deg, rgba(255, 0, 90, 0.1), transparent 40%, rgba(0, 204, 255, 0.1));
+      transform: translateX(-100%);
+    }
+
+    .glitch-transition.active {
+      animation: glitchOverlay 520ms steps(8, end) forwards;
+    }
+
+    body.glitching {
+      animation: glitchBody 520ms steps(9, end) both;
+    }
+
+    @keyframes glitchOverlay {
+      0% { opacity: 0; transform: translateX(-110%); }
+      15% { opacity: 0.9; transform: translateX(-10%); }
+      35% { opacity: 0.45; transform: translateX(8%); }
+      52% { opacity: 0.8; transform: translateX(-3%); }
+      70% { opacity: 0.35; transform: translateX(5%); }
+      100% { opacity: 0; transform: translateX(110%); }
+    }
+
+    @keyframes glitchBody {
+      0% { filter: contrast(1.2) saturate(1.2) hue-rotate(0deg); transform: translate3d(0, 0, 0); }
+      18% { filter: contrast(1.45) saturate(1.5) hue-rotate(-8deg); transform: translate3d(2px, -1px, 0); }
+      33% { filter: contrast(0.9) saturate(0.8) hue-rotate(7deg); transform: translate3d(-3px, 2px, 0); }
+      49% { filter: contrast(1.5) saturate(1.65) hue-rotate(-6deg); transform: translate3d(3px, -2px, 0); }
+      70% { filter: contrast(1.1) saturate(1.2) hue-rotate(4deg); transform: translate3d(-2px, 1px, 0); }
+      100% { filter: none; transform: translate3d(0, 0, 0); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .glitch-transition.active,
+      body.glitching {
+        animation-duration: 0.01ms;
+      }
+    }
+
   </style>
 </head>
 <body>
+
+<div class="glitch-transition" id="glitch-transition" aria-hidden="true"></div>
 
 <header>
   <canvas id="mesh-bg" aria-hidden="true"></canvas>
@@ -695,6 +743,7 @@ const activeModoScripts = [];
 
 const modoToggleButton = document.getElementById('modo-toggle');
 const modoToggleIcon = document.getElementById('modo-toggle-icon');
+const glitchTransition = document.getElementById('glitch-transition');
 
 function getRandomModoInterval() {
   const seconds = Math.floor(Math.random() * (75 - 30 + 1)) + 30;
@@ -814,6 +863,24 @@ function chooseRandomModoSource() {
   return nextList[index];
 }
 
+function runModoGlitchTransition(duration = 520) {
+  if (!glitchTransition) return Promise.resolve();
+
+  glitchTransition.classList.remove('active');
+  void glitchTransition.offsetWidth;
+
+  glitchTransition.classList.add('active');
+  document.body.classList.add('glitching');
+
+  return new Promise(resolve => {
+    setTimeout(() => {
+      glitchTransition.classList.remove('active');
+      document.body.classList.remove('glitching');
+      resolve();
+    }, duration);
+  });
+}
+
 async function loadModoScripts() {
   const source = chooseRandomModoSource();
   if (!source) return;
@@ -856,6 +923,7 @@ async function runModoCycle() {
   isModoLoading = true;
 
   try {
+    await runModoGlitchTransition();
     await loadModoScripts();
   } catch (error) {
     console.error('Erro ao carregar modo aleatório:', error);
