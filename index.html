@@ -478,7 +478,7 @@
 
 
 <button class="modo-toggle" id="modo-toggle" type="button" aria-label="Controlar troca de modo" title="Iniciar ou pausar troca automática de modo">
-  <span class="modo-toggle__icon" id="modo-toggle-icon" aria-hidden="true">Ⅱ</span>
+  <span class="modo-toggle__icon" id="modo-toggle-icon" aria-hidden="true">▶</span>
 </button>
 
 <section class="chat-widget" id="chat-widget" aria-label="Chat de contato">
@@ -731,7 +731,7 @@ function runModoCountdownAnimation() {
     const remaining = Math.max(0, modoExpectedEnd - performance.now());
     const elapsed = modoTimerDuration - remaining;
     const progress = modoTimerDuration ? elapsed / modoTimerDuration : 0;
-    setModoToggleVisual(progress, '▶');
+    setModoToggleVisual(progress, 'Ⅱ');
 
     if (remaining <= 0) {
       stopModoCountdownAnimation();
@@ -752,12 +752,12 @@ function startModoTimer(durationMs) {
   modoRemainingTime = durationMs;
   modoExpectedEnd = performance.now() + durationMs;
 
-  setModoToggleVisual(0, '▶');
+  setModoToggleVisual(0, 'Ⅱ');
   runModoCountdownAnimation();
 
   modoTimerId = setTimeout(async () => {
     modoRemainingTime = 0;
-    setModoToggleVisual(1, '▶');
+    setModoToggleVisual(1, 'Ⅱ');
     await runModoCycle();
   }, durationMs);
 }
@@ -770,7 +770,7 @@ function pauseModoTimer() {
   clearModoTimer();
 
   const progress = modoTimerDuration ? (modoTimerDuration - modoRemainingTime) / modoTimerDuration : 0;
-  setModoToggleVisual(progress, 'Ⅱ');
+  setModoToggleVisual(progress, '▶');
 }
 
 function resumeModoTimer() {
@@ -798,7 +798,7 @@ function clearModoScripts() {
 
 function scheduleNextModoLoad() {
   if (!modoAutoEnabled) {
-    setModoToggleVisual(0, 'Ⅱ');
+    setModoToggleVisual(0, '▶');
     return;
   }
 
@@ -866,7 +866,7 @@ async function runModoCycle() {
 }
 
 window.addEventListener('load', () => {
-  setModoToggleVisual(0, 'Ⅱ');
+  setModoToggleVisual(0, '▶');
 });
 
 modoToggleButton.addEventListener('click', () => {
