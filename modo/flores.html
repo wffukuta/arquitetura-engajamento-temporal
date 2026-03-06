@@ -3,39 +3,17 @@
     const header = document.querySelector('header');
     const heroContent = document.querySelector('.hero-content');
     const h1 = header.querySelector('h1');
-    if (!header || !h1 || !heroContent) return;
+    if (!header || !heroContent || !h1) return;
 
-    // --- 1. CONFIGURAÇÃO DE CAMADAS (Z-INDEX) ---
+    // 1. Configuração de Camadas Simples
     header.style.position = 'relative';
-    header.style.overflow = 'hidden';
-
-    // Texto Original (Frente)
-    h1.style.position = 'relative';
-    h1.style.zIndex = '30';
-    h1.style.textShadow = 'none'; // Remove sombra padrão se houver
-
-    // Criar o "Dublê de Sombra" (Fundo)
-    const shadowClone = h1.cloneNode(true);
-    shadowClone.setAttribute('aria-hidden', 'true');
-    Object.assign(shadowClone.style, {
-        position: 'absolute',
-        top: '0',
-        left: '0',
-        width: '100%',
-        zIndex: '10',
-        color: '#000',
-        opacity: '1',
-        margin: '0',
-        padding: 'inherit',
-        transform: 'translate(0, 0)', // Começa sem deslocamento
-        pointerEvents: 'none',
-        display: 'block'
-    });
-    // Garantir que o container do herói permita o posicionamento do clone
+    
+    // Texto na frente de tudo
     heroContent.style.position = 'relative';
-    heroContent.appendChild(shadowClone);
+    heroContent.style.zIndex = '10';
+    h1.style.textShadow = 'none'; // Garante que não haja sombra
 
-    // Canvas do Jardim (Meio)
+    // Canvas no meio (atrás do texto, na frente do fundo)
     const canvas = document.createElement('canvas');
     Object.assign(canvas.style, {
         position: 'absolute',
@@ -43,34 +21,27 @@
         left: '0',
         width: '100%',
         height: '100%',
-        zIndex: '20',
+        zIndex: '5',
         pointerEvents: 'none'
     });
     header.appendChild(canvas);
 
-    // --- 2. LÓGICA DO JARDIM ---
     const ctx = canvas.getContext('2d', { alpha: true });
     let flowers = [];
     const colors = ['#58a6ff', '#7b5cff', '#20c997'];
     const DURATION_MS = 20000; 
-    const startTime = Date.now();
+    let startTime = Date.now();
 
-    function resize() {
+    function setupCanvas() {
         canvas.width = header.offsetWidth;
         canvas.height = header.offsetHeight;
-        // Sincroniza posição do clone no resize
-        const rect = h1.getBoundingClientRect();
-        const parentRect = heroContent.getBoundingClientRect();
-        shadowClone.style.left = (h1.offsetLeft) + "px";
-        shadowClone.style.top = (h1.offsetTop) + "px";
     }
-    window.addEventListener('resize', resize);
-    setTimeout(resize, 100); // Delay curto para garantir o render inicial
 
     class Flower {
         constructor() {
+            // Garante espalhamento por toda a largura do canvas
             this.x = Math.random() * canvas.width;
-            this.maxH = Math.random() * 45 + 35;
+            this.maxH = Math.random() * 40 + 30;
             this.delay = Math.random() * (DURATION_MS * 0.7);
             this.color = colors[Math.floor(Math.random() * colors.length)];
             this.petals = Math.floor(Math.random() * 2) + 5;
@@ -81,7 +52,7 @@
             const elapsed = Date.now() - (startTime + this.delay);
             if (elapsed < 0) return;
 
-            const p = Math.min(1, elapsed / 4000); 
+            const p = Math.min(1, elapsed / 4000); // 4 segundos para cada flor crescer
             const h = this.maxH * p;
 
             ctx.save();
@@ -95,9 +66,9 @@
             ctx.lineTo(h * this.angle, -h);
             ctx.stroke();
 
-            // Flor (Otimizada com Arcs simples)
-            if (p > 0.4) {
-                const s = (p - 0.4) * 12;
+            // Flor
+            if (p > 0.3) {
+                const s = (p - 0.3) * 12;
                 ctx.translate(h * this.angle, -h);
                 ctx.fillStyle = this.color;
                 for (let i = 0; i < this.petals; i++) {
@@ -106,29 +77,37 @@
                     ctx.arc(s, 0, s/2, 0, Math.PI * 2);
                     ctx.fill();
                 }
+                // Miolo
+                ctx.beginPath();
+                ctx.fillStyle = '#fff';
+                ctx.arc(0, 0, s/3, 0, Math.PI * 2);
+                ctx.fill();
             }
             ctx.restore();
         }
     }
 
-    for (let i = 0; i < 45; i++) flowers.push(new Flower());
+    function init() {
+        setupCanvas();
+        flowers = [];
+        // Criamos 50 flores espalhadas
+        for (let i = 0; i < 50; i++) {
+            flowers.push(new Flower());
+        }
+    }
 
-    // --- 3. ANIMAÇÃO SINCRONIZADA ---
     function animate() {
-        const totalElapsed = Date.now() - startTime;
-        const totalProgress = Math.min(1, totalElapsed / DURATION_MS);
-
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // Move o Dublê de Sombra (Hardware Accelerated)
-        const offset = (totalProgress * 6).toFixed(1);
-        shadowClone.style.transform = `translate(${offset}px, ${offset}px)`;
-
         flowers.forEach(f => f.draw());
-
         requestAnimationFrame(animate);
     }
 
-    animate();
+    // Aguarda um momento para o navegador calcular o tamanho real do header
+    window.addEventListener('resize', setupCanvas);
+    setTimeout(() => {
+        init();
+        animate();
+    }, 100);
+
 })();
 </script>
