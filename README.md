@@ -1,4 +1,4 @@
-# **Personal Site — Arquitetura de Engajamento Temporal**
+# **AET — Arquitetura de Engajamento Temporal**
 
 O tempo como mecanismo de conversão. Este projeto subverte o portfólio tradicional, utilizando uma progressão de estímulos para transformar visitantes casuais em leads qualificados.
 
