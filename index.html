@@ -1436,7 +1436,6 @@ const chatSend = document.getElementById('chat-send');
 const projectPromptOverlay = document.getElementById('project-prompt-overlay');
 const projectPromptForm = document.getElementById('project-prompt-form');
 const projectPromptInput = document.getElementById('project-prompt-input');
-const projectPromptSend = document.getElementById('project-prompt-send');
 const projectPromptStatus = document.getElementById('project-prompt-status');
 
 let promptVisible = false;
@@ -1570,57 +1569,53 @@ chatForm.addEventListener('submit', async event => {
   chatInput.focus();
 });
 
-projectPromptForm?.addEventListener('submit', async event => {
-  event.preventDefault();
+projectPromptForm?.addEventListener('submit', async e => {
+  e.preventDefault();
 
-  const text = projectPromptInput.value.trim();
-  if (!text) {
-    projectPromptStatus.textContent = 'Digite uma resposta antes de enviar.';
-    return;
-  }
+  const resposta = projectPromptInput.value.trim();
+  if (!resposta) return;
 
-  projectPromptStatus.textContent = '';
-  projectPromptSend.disabled = true;
-
-  let feedbackMessage = 'Resposta enviada com sucesso!';
+  // 1. Feedback visual e trava o botão
+  projectPromptStatus.textContent = 'Salvando...';
+  const btn = e.target.querySelector('button');
+  if (btn) btn.disabled = true;
 
   try {
-    if (!auth || !database) {
-      throw new Error('Firebase indisponível.');
-    }
+    // 2. Tenta pegar o UID do usuário logado (Firebase Auth)
+    // Se não houver usuário, salvamos como 'anonimo'
+    const user = auth.currentUser;
+    const uid = user ? user.uid : `anonimo_${Date.now()}`;
 
-    let user = auth.currentUser;
-
-    if (!user) {
-      await signInWithPopup(auth, provider);
-      user = auth.currentUser;
-    }
-
-    if (!user) {
-      throw new Error('Não foi possível identificar o usuário.');
-    }
-
-    const suggestionsRef = ref(database, `projectRequests/${user.uid}`);
-
-    await push(suggestionsRef, {
-      uid: user.uid,
-      author: user.displayName || user.email || 'Visitante',
-      text,
-      createdAt: serverTimestamp()
+    // 3. Salva no Realtime Database no nó /projeto/UID/
+    // Usamos .push() para que ele possa enviar vários projetos sem sobrescrever
+    await push(ref(database, `projeto/${uid}`), {
+      descricao: resposta,
+      timestamp: serverTimestamp(),
+      email: user ? user.email : 'não autenticado'
     });
 
-    projectPromptInput.value = '';
+    projectPromptStatus.textContent = 'Enviado!';
   } catch (error) {
-    feedbackMessage = 'Não foi possível salvar agora. Continuando...';
+    // 4. Se der erro (ex: falta de permissão), logamos mas não travamos o usuário
+    console.error('Erro Firebase:', error);
+    projectPromptStatus.textContent = 'Erro de rede, mas vamos prosseguir...';
   }
 
-  projectPromptStatus.textContent = feedbackMessage;
-
+  // 5. O SEGREDO DO FLUXO: Executa de qualquer forma após 1 segundo
   setTimeout(() => {
-    projectPromptStatus.textContent = '';
-    hideProjectPromptOverlay();
-    projectPromptSend.disabled = false;
-  }, 900);
+    // Fecha o modal do projeto
+    projectPromptOverlay.classList.remove('visible');
+    projectPromptOverlay.setAttribute('aria-hidden', 'true');
+
+    // Inicia o efeito de "subida" da tela (retorno ao normal)
+    document.body.classList.remove('screen-fall');
+    document.body.classList.add('screen-rise');
+    promptVisible = false;
+
+    // Reseta o formulário
+    projectPromptInput.value = '';
+    if (btn) btn.disabled = false;
+  }, 1200);
 });
 </script>
 
