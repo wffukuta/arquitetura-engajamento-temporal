@@ -1468,6 +1468,13 @@ function hideProjectPromptOverlay() {
   }, 900);
 }
 
+function hideModoToggleButton() {
+  if (!modoToggleButton) return;
+
+  modoToggleButton.style.visibility = 'hidden';
+  modoToggleButton.setAttribute('aria-hidden', 'true');
+}
+
 window.addEventListener('modo:all-sources-completed', () => {
   showProjectPromptOverlay();
 });
@@ -1615,6 +1622,9 @@ projectPromptForm?.addEventListener('submit', async e => {
     // Reseta o formulário
     projectPromptInput.value = '';
     if (btn) btn.disabled = false;
+
+    // Final do fluxo: deixa o botão de modos invisível
+    hideModoToggleButton();
   }, 1200);
 });
 </script>
