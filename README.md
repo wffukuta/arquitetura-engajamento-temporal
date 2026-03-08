@@ -5,7 +5,7 @@
 <br>
 
 <a href="https://wffukuta.github.io/arquitetura-engajamento-temporal/">
-  <img src="https://img.shields.io/badge/VISUALIZAR_ARQUITETURA_APLICADA-2ea44f?style=for-the-badge" alt="VISUALIZAR" width="300">
+  <img src="https://img.shields.io/badge/VISUALIZAR_ARQUITETURA_APLICADA_EM_PORTFÓLIO-2ea44f?style=for-the-badge" alt="VISUALIZAR" width="500">
 </a>
 </a>
 <br>
