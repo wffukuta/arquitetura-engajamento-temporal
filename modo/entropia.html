@@ -1,46 +1,160 @@
 <script>
 (function() {
+   
+    const projetos = [
+        {
+            icon: `<svg viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><path d="M6 12h.01M9 12h.01M15 12h.01M18 12h.01M4 15a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2zM16 15a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 00-1-1h-2a1 1 0 00-1 1v2zM12 8V6m0 0a2 2 0 10-2-2 2 2 0 002 2z"/></svg>`,
+            desc: "<strong>VINHADINHO</strong> é um jogo multplataforma desenvolvido totalmente solo e com custo zero de produção e manutenção, totalmente automatizado. O objetivo era apoio na criação de conteúdo no YouTube, mas se tornou uma plataforma sólida atendendo a vários projetos."
+        },
+        {
+            icon: `<svg viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>`,
+            desc: "<strong>MUNDO GAMER</strong>: Aplicativo de notícias e gerenciador geek/gamer. O projeto escalou para um APP que gerencia comunidades e exibe notícias, além de ser uma plataforma de jogos. Desenvolvido 100% por W.F.FUKUTA."
+        },
+        {
+            icon: `<svg viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>`,
+            desc: "<strong>[NÓ]~[DO]</strong> é uma ferramenta open-source para arquitetura de sistemas. Criada para diagramas pessoais, tornou-se opensource para atrair investimento e estabelecer um marketplace de extensões forte."
+        },
+        {
+            icon: `<svg viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>`,
+            desc: "<strong>AET</strong>: Arquitetura de Engajamento Temporal é uma tese de UX autoral para conversão e retenção. O que era um portfólio virou laboratório para colher dados e fortalecer minha tese de mercado."
+        }
+    ];
+
+    // 2. Injeção de CSS
     const css = `
-        :root {
-            --bg-body: #f4f1ea; /* Cor de papel antigo */
-            --bg-card: #ffffff;
-            --border-color: #2f2f2f;
-            --text-main: #1a1a1a;
-            --text-muted: #555555;
-            --link-color: #000000;
+        #aet-timeline {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            pointer-events: none;
         }
-        body {
-            background-image: none !important;
-            filter: sepia(0.2);
-            transition: all 2s ease-in-out;
+        .timeline-item {
+            position: relative;
+            margin-bottom: 0;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: auto;
         }
-        header {
-            background-color: #f4f1ea !important;
-            border-bottom: 1px solid #2f2f2f !important;
+        .timeline-item.visible {
+            opacity: 1;
+            transform: translateY(0);
         }
-        #mesh-bg { display: none !important; }
-        .card {
-            box-shadow: none !important;
-            border: 1px solid #d1d1d1 !important;
-            border-bottom: 3px solid #2f2f2f !important;
+        .timeline-circle {
+            width: 50px;
+            height: 50px;
+            border: 3px solid #000;
+            border-radius: 50%;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: help;
+            overflow: hidden;
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.2);
+            padding: 8px;
+            transition: transform 0.3s ease;
         }
-        h1, h2 { font-family: 'serif' !important; text-transform: none !important; }
+        .timeline-circle:hover { transform: scale(1.1); }
+        .timeline-line {
+            width: 4px;
+            background: #000;
+            height: 0;
+            transition: height 1.5s ease;
+        }
+        /* Balão de História */
+        .timeline-balloon {
+            position: absolute;
+            right: 70px;
+            top: 0;
+            width: 250px;
+            background: #000;
+            color: #fff;
+            padding: 12px;
+            font-size: 13px;
+            font-family: 'Crimson Pro', serif;
+            line-height: 1.4;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 5px 5px 0px rgba(0,0,0,0.3);
+            border: 1px solid #fff;
+        }
+        .timeline-item:hover .timeline-balloon {
+            opacity: 1;
+            visibility: visible;
+            right: 60px;
+        }
+        .timeline-balloon::after {
+            content: '';
+            position: absolute;
+            right: -10px;
+            top: 15px;
+            border-style: solid;
+            border-width: 10px 0 10px 10px;
+            border-color: transparent transparent transparent #000;
+        }
     `;
 
     const styleTag = document.createElement('style');
-    styleTag.id = 'kindle-theme-overrides'; // Já está no seu clearModoScripts
+    styleTag.id = 'aet-history-theme';
     styleTag.textContent = css;
     document.head.appendChild(styleTag);
 
-    console.log("📖 Modo Foco: Priorizando a leitura e reflexão.");
+    // 3. Estrutura DOM
+    const container = document.createElement('div');
+    container.id = 'aet-timeline';
+    document.body.appendChild(container);
 
-    // Desativa temporariamente o movimento do mesh para poupar processamento
-    const mesh = document.getElementById('mesh-bg');
-    if(mesh) mesh.style.display = 'none';
+    // 4. Lógica de Sequência Temporal
+    let currentIdx = 0;
 
+    function renderNext() {
+        if (currentIdx >= projetos.length) return;
+
+        const data = projetos[currentIdx];
+        
+        // Criar linha se não for o primeiro
+        if (currentIdx > 0) {
+            const line = document.createElement('div');
+            line.className = 'timeline-line';
+            container.appendChild(line);
+            setTimeout(() => line.style.height = '40px', 100);
+        }
+
+        // Criar Item (Círculo + Balão)
+        const item = document.createElement('div');
+        item.className = 'timeline-item';
+        item.innerHTML = `
+            <div class="timeline-circle">${data.icon}</div>
+            <div class="timeline-balloon">${data.desc}</div>
+        `;
+        
+        container.appendChild(item);
+        
+        // Trigger animação de entrada
+        setTimeout(() => item.classList.add('visible'), 100);
+
+        currentIdx++;
+
+        // Agenda o próximo para daqui a 10 segundos
+        if (currentIdx < projetos.length) {
+            setTimeout(renderNext, 10000);
+        }
+    }
+
+    // Inicia o fluxo
+    renderNext();
+
+    // Limpeza ao sair do modo
     window.addEventListener('modo:all-sources-completed', () => {
         styleTag.remove();
-        if(mesh) mesh.style.display = 'block';
+        container.remove();
     }, { once: true });
+
 })();
 </script>
