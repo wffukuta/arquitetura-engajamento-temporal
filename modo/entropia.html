@@ -1,156 +1,161 @@
 <script>
 (function() {
-   
-    const projetos = [
+    // 1. Definição dos Dados - Foco em Autonomia do Cliente
+    const etapas = [
         {
-            icon: `<svg viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><path d="M6 12h.01M9 12h.01M15 12h.01M18 12h.01M4 15a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2zM16 15a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 00-1-1h-2a1 1 0 00-1 1v2zM12 8V6m0 0a2 2 0 10-2-2 2 2 0 002 2z"/></svg>`,
-            desc: "<strong>VINHADINHO</strong> é um jogo multplataforma desenvolvido totalmente solo e com custo zero de produção e manutenção, totalmente automatizado. O objetivo era apoio na criação de conteúdo no YouTube, mas se tornou uma plataforma sólida atendendo a vários projetos."
+            icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L21 2"/></svg>`,
+            title: "ENTREGA CHAVE NA MÃO",
+            desc: "Eu cuido de tudo: do domínio ao servidor. Você recebe o projeto pronto para faturar, sem precisar entender de infraestrutura ou configuração técnica."
         },
         {
-            icon: `<svg viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>`,
-            desc: "<strong>MUNDO GAMER</strong>: Aplicativo de notícias e gerenciador geek/gamer. O projeto escalou para um APP que gerencia comunidades e exibe notícias, além de ser uma plataforma de jogos. Desenvolvido 100% por W.F.FUKUTA."
+            icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M3 9h18"/></svg>`,
+            title: "GESTÃO INDEPENDENTE",
+            desc: "Desenvolvo um Painel Administrativo sob medida. Você altera textos, imagens e conteúdos sozinho, com total liberdade e sem custos extras de manutenção."
         },
         {
-            icon: `<svg viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>`,
-            desc: "<strong>[NÓ]~[DO]</strong> é uma ferramenta open-source para arquitetura de sistemas. Criada para diagramas pessoais, tornou-se opensource para atrair investimento e estabelecer um marketplace de extensões forte."
+            icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20M4 19.5A2.5 2.5 0 006.5 22H20M4 19.5V3a1 1 0 011-1h15v18H6.5a1 1 0 01-1-1z"/></svg>`,
+            title: "DOCUMENTAÇÃO VIVA",
+            desc: "Nada de 'caixa preta'. Entrego um manual funcional detalhando como o sistema funciona e como ele pode evoluir. Transparência total sobre seu ativo digital."
         },
         {
-            icon: `<svg viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>`,
-            desc: "<strong>AET</strong>: Arquitetura de Engajamento Temporal é uma tese de UX autoral para conversão e retenção. O que era um portfólio virou laboratório para colher dados e fortalecer minha tese de mercado."
+            icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>`,
+            title: "ESCALA E EVOLUÇÃO",
+            desc: "O código é seu e é escalável. Se o projeto crescer 10x, a base está pronta. Eu não crio apenas um site, eu construo o alicerce do seu negócio."
         }
     ];
 
-    // 2. Injeção de CSS
+    // 2. Injeção de CSS (Respeitando a AET)
     const css = `
-        #aet-timeline {
+        #aet-cycle {
             position: fixed;
-            top: 20px;
-            right: 20px;
+            top: 25px;
+            right: 25px;
             z-index: 9999;
             display: flex;
             flex-direction: column;
             align-items: center;
             pointer-events: none;
         }
-        .timeline-item {
+        .cycle-item {
             position: relative;
             margin-bottom: 0;
             opacity: 0;
-            transform: translateY(-20px);
-            transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform: translateX(30px);
+            transition: all 0.7s cubic-bezier(0.23, 1, 0.32, 1);
             pointer-events: auto;
         }
-        .timeline-item.visible {
+        .cycle-item.visible {
             opacity: 1;
-            transform: translateY(0);
+            transform: translateX(0);
         }
-        .timeline-circle {
-            width: 50px;
-            height: 50px;
-            border: 3px solid #000;
+        .cycle-circle {
+            width: 48px;
+            height: 48px;
+            border: 2px solid #000;
             border-radius: 50%;
             background: #fff;
             display: flex;
             align-items: center;
             justify-content: center;
-            cursor: help;
-            overflow: hidden;
-            box-shadow: 4px 4px 0px rgba(0,0,0,0.2);
-            padding: 8px;
-            transition: transform 0.3s ease;
+            cursor: pointer;
+            box-shadow: 6px 6px 0px #000;
+            padding: 10px;
+            color: #000;
+            transition: all 0.2s ease;
         }
-        .timeline-circle:hover { transform: scale(1.1); }
-        .timeline-line {
-            width: 4px;
+        .cycle-circle:hover { 
+            transform: translate(-2px, -2px);
+            box-shadow: 8px 8px 0px #000;
+            background: #f0f0f0;
+        }
+        .cycle-line {
+            width: 3px;
             background: #000;
             height: 0;
-            transition: height 1.5s ease;
+            transition: height 1s ease;
         }
-        /* Balão de História */
-        .timeline-balloon {
+        /* Balão de Informação */
+        .cycle-balloon {
             position: absolute;
-            right: 70px;
+            right: 75px;
             top: 0;
-            width: 250px;
-            background: #000;
-            color: #fff;
-            padding: 12px;
-            font-size: 13px;
-            font-family: 'Crimson Pro', serif;
-            line-height: 1.4;
+            width: 280px;
+            background: #fff;
+            color: #000;
+            padding: 15px;
+            border: 2px solid #000;
+            box-shadow: 8px 8px 0px #000;
             opacity: 0;
             visibility: hidden;
             transition: all 0.3s ease;
-            box-shadow: 5px 5px 0px rgba(0,0,0,0.3);
-            border: 1px solid #fff;
+            text-align: left;
         }
-        .timeline-item:hover .timeline-balloon {
+        .cycle-item:hover .cycle-balloon {
             opacity: 1;
             visibility: visible;
-            right: 60px;
+            right: 65px;
         }
-        .timeline-balloon::after {
-            content: '';
-            position: absolute;
-            right: -10px;
-            top: 15px;
-            border-style: solid;
-            border-width: 10px 0 10px 10px;
-            border-color: transparent transparent transparent #000;
+        .cycle-balloon h4 {
+            margin: 0 0 8px 0;
+            font-size: 14px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #000;
+        }
+        .cycle-balloon p {
+            margin: 0;
+            font-size: 13px;
+            line-height: 1.5;
+            font-family: 'Crimson Pro', serif;
         }
     `;
 
     const styleTag = document.createElement('style');
-    styleTag.id = 'aet-history-theme';
+    styleTag.id = 'aet-cycle-theme';
     styleTag.textContent = css;
     document.head.appendChild(styleTag);
 
-    // 3. Estrutura DOM
     const container = document.createElement('div');
-    container.id = 'aet-timeline';
+    container.id = 'aet-cycle';
     document.body.appendChild(container);
 
-    // 4. Lógica de Sequência Temporal
     let currentIdx = 0;
 
     function renderNext() {
-        if (currentIdx >= projetos.length) return;
+        if (currentIdx >= etapas.length) return;
 
-        const data = projetos[currentIdx];
+        const data = etapas[currentIdx];
         
-        // Criar linha se não for o primeiro
         if (currentIdx > 0) {
             const line = document.createElement('div');
-            line.className = 'timeline-line';
+            line.className = 'cycle-line';
             container.appendChild(line);
-            setTimeout(() => line.style.height = '40px', 100);
+            setTimeout(() => line.style.height = '35px', 100);
         }
 
-        // Criar Item (Círculo + Balão)
         const item = document.createElement('div');
-        item.className = 'timeline-item';
+        item.className = 'cycle-item';
         item.innerHTML = `
-            <div class="timeline-circle">${data.icon}</div>
-            <div class="timeline-balloon">${data.desc}</div>
+            <div class="cycle-circle">${data.icon}</div>
+            <div class="cycle-balloon">
+                <h4>${data.title}</h4>
+                <p>${data.desc}</p>
+            </div>
         `;
         
         container.appendChild(item);
-        
-        // Trigger animação de entrada
         setTimeout(() => item.classList.add('visible'), 100);
 
         currentIdx++;
-
-        // Agenda o próximo para daqui a 10 segundos
-        if (currentIdx < projetos.length) {
-            setTimeout(renderNext, 10000);
+        if (currentIdx < etapas.length) {
+            setTimeout(renderNext, 10000); // 10 segundos entre cada pilar
         }
     }
 
-    // Inicia o fluxo
     renderNext();
 
-    // Limpeza ao sair do modo
+    // Limpeza ao trocar de modo
     window.addEventListener('modo:all-sources-completed', () => {
         styleTag.remove();
         container.remove();
