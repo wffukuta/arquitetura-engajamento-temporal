@@ -673,21 +673,23 @@
 </header>
 
 <main>
-<section class="about" id="about-section">
-    <div class="about-container">
-        <h2 class="about-title">Engenharia de Eficiência e Autonomia</h2>
-        
-        <p class="about-lead">
-            Atuo como <strong>Desenvolvedor Full Stack</strong> focado em arquiteturas que equilibram robustez técnica e viabilidade financeira. 
-        </p>
+<section class="about" id="about-section" style="display: none;">
+    <div class="about-tabs">
+        <button class="tab-btn active" onclick="openTab(event, 'tab-trabalho')">01. COMO TRABALHO</button>
+        <button class="tab-btn" onclick="openTab(event, 'tab-reflexao')">02. REFLEXÃO</button>
+        <button class="tab-btn" onclick="openTab(event, 'tab-tecnica')">03. VISÃO TÉCNICA</button>
+    </div>
 
-        <div class="about-quote">
-            <p>"No mercado atual, o sucesso de um software não é medido apenas pelo código, mas pela sua sustentabilidade. Se você precisa pagar para mudar uma vírgula, você é refém, não dono."</p>
-        </div>
+    <div id="tab-trabalho" class="tab-content active">
+        <p>Atuo como <strong>Desenvolvedor Full Stack</strong> focado em arquiteturas que equilibram robustez técnica e viabilidade financeira. Desenvolvo projetos com baixo custo de produção e <strong>custo reduzido de manutenção</strong>, configurados para operar com autonomia desde o primeiro dia.</p>
+    </div>
 
-        <div class="about-footer">
-            <p><strong>VISÃO TÉCNICA:</strong> Transformo complexidade em ativos independentes com baixo custo de manutenção. Busco projetos que valorizam inteligência de execução.</p>
-        </div>
+    <div id="tab-reflexao" class="tab-content">
+        <p><em>"No mercado atual, o sucesso de um software não é medido apenas pelo código, mas pela sua sustentabilidade. Se o sistema exige intervenção técnica para tarefas simples de gestão, a arquitetura falhou. O código deve ser um facilitador, não um centro de custos fixos."</em></p>
+    </div>
+
+    <div id="tab-tecnica" class="tab-content">
+        <p>Trabalho para transformar complexidade em ativos independentes. Ao entregar um <strong>Painel Administrativo Próprio</strong> e documentação funcional, transfiro o controle total para o dono da ideia. Busco parceiros que valorizam inteligência de execução e liberdade de evolução.</p>
     </div>
 </section>
 
@@ -1668,7 +1670,6 @@ onAuthStateChanged(auth, user => {
   }
 });
 
-
 chatForm.addEventListener('submit', async event => {
   event.preventDefault();
 
@@ -1731,7 +1732,28 @@ projectForm?.addEventListener('submit', async e => {
     encerrarFluxoProjeto();
   }, 1200);
 });
+
 </script>
 
+<scrip>
+function openTab(evt, tabName) {
+    var i, tabcontent, tablinks;
+    tabcontent = document.getElementsByClassName("tab-content");
+    for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
+        tabcontent[i].classList.remove("active");
+    }
+    tablinks = document.getElementsByClassName("tab-btn");
+    for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].classList.remove("active");
+    }
+    document.getElementById(tabName).style.display = "block";
+    document.getElementById(tabName).classList.add("active");
+    evt.currentTarget.classList.add("active");
+}
+
+</scrip>
+
+  
 </body>
 </html>
