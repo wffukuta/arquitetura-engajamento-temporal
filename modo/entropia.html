@@ -1,65 +1,46 @@
 <script>
 (function() {
-   
     const css = `
         :root {
-            --bg-body: #050505;
-            --bg-card: #000000;
-            --border-color: #00ff41; 
-            --text-main: #00ff41;
-            --text-muted: #003300;
-            --link-color: #00ff41;
+            --bg-body: #f4f1ea; /* Cor de papel antigo */
+            --bg-card: #ffffff;
+            --border-color: #2f2f2f;
+            --text-main: #1a1a1a;
+            --text-muted: #555555;
+            --link-color: #000000;
         }
         body {
-            background-image: linear-gradient(rgba(0, 255, 65, 0.05) 1px, transparent 1px),
-                              linear-gradient(90deg, rgba(0, 255, 65, 0.05) 1px, transparent 1px);
-            background-size: 30px 30px;
+            background-image: none !important;
+            filter: sepia(0.2);
+            transition: all 2s ease-in-out;
         }
+        header {
+            background-color: #f4f1ea !important;
+            border-bottom: 1px solid #2f2f2f !important;
+        }
+        #mesh-bg { display: none !important; }
         .card {
-            box-shadow: 4px 4px 0px #003300 !important;
-            border: 1px solid #00ff41 !important;
+            box-shadow: none !important;
+            border: 1px solid #d1d1d1 !important;
+            border-bottom: 3px solid #2f2f2f !important;
         }
-        body::before {
-            content: " ";
-            display: block;
-            position: fixed;
-            top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), 
-                        linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
-            z-index: 9999;
-            pointer-events: none;
-            background-size: 100% 4px, 3px 100%;
-            opacity: 0.3;
-        }
+        h1, h2 { font-family: 'serif' !important; text-transform: none !important; }
     `;
 
     const styleTag = document.createElement('style');
-    // Usando um dos IDs que o seu index.html já sabe limpar no 'clearModoScripts'
-    styleTag.id = 'cyberpunk-theme-overrides'; 
+    styleTag.id = 'kindle-theme-overrides'; // Já está no seu clearModoScripts
     styleTag.textContent = css;
     document.head.appendChild(styleTag);
 
-    console.log("🧬 Modo Entropia: CSS e Lógica injetados com sucesso.");
+    console.log("📖 Modo Foco: Priorizando a leitura e reflexão.");
 
-    // 2. Lógica de Interação Temporal
-    const cards = document.querySelectorAll('.card');
-    let intensidade = 0;
+    // Desativa temporariamente o movimento do mesh para poupar processamento
+    const mesh = document.getElementById('mesh-bg');
+    if(mesh) mesh.style.display = 'none';
 
-    const loopEntropico = setInterval(() => {
-        intensidade += 0.05;
-        cards.forEach(card => {
-            const x = (Math.random() - 0.5) * intensidade;
-            const y = (Math.random() - 0.5) * intensidade;
-            card.style.transform = `translate(${x}px, ${y}px)`;
-        });
-        if (intensidade > 4) intensidade = 0;
-    }, 100);
-
-    // Limpeza automática ao trocar de modo
     window.addEventListener('modo:all-sources-completed', () => {
-        clearInterval(loopEntropico);
         styleTag.remove();
+        if(mesh) mesh.style.display = 'block';
     }, { once: true });
-
 })();
 </script>
