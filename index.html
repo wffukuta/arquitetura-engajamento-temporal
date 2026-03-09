@@ -643,7 +643,7 @@
 </header>
 
 <main>
-  <section class="about" aria-label="Sobre mim">
+  <section class="about" id="about-section" aria-label="Sobre mim">
     <h2>COMO EU TRABALHO:</h2>
     <p>Sou Desenvolvedor Full Stack focado em entregas de ponta a ponta e total autonomia do cliente. Do zero à produção, entrego seu projeto já publicado e configurado, incluindo um painel administrativo próprio para gestão de conteúdo e documentação funcional detalhando como usar ou evoluir o código.</p>
   </section>
@@ -1185,6 +1185,8 @@ modoToggleButton.addEventListener('click', () => {
 
   resumeModoTimer();
 });
+
+document.getElementById('about-section').style.display = 'none';
 </script>
 
 
