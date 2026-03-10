@@ -85,79 +85,76 @@
       z-index: 1;
     }
 
-   .about {
+  .about {
   margin: 0 auto 24px auto;
-  max-width: 780px;
-  padding: 16px;
-  border: 2px solid var(--border-color);
-  border-radius: 0;
-  background-color: var(--bg-card);
-  box-shadow: 4px 4px 0 #000000;
+  max-width: 780px; /* Mesma largura original */
+  padding: 0; 
+  border: 2px solid #000;
+  background-color: #fff;
+  box-shadow: 4px 4px 0 #000;
+  position: relative;
+  overflow: hidden;
 }
 
-.about h2 {
-  margin: 0 0 8px 0;
-  font-size: 18px;
-  color: var(--link-color);
+.about-wrapper {
+  display: flex;
+  align-items: center;
+  min-height: 110px; /* Altura controlada para não ficar "ridículo" */
 }
 
-.about p {
+.about-content-slider {
+  flex: 1;
+  padding: 16px 50px 16px 16px; /* Espaço extra na direita para o botão */
+}
+
+.about-step {
+  display: none;
+  animation: slideIn 0.3s ease-out;
+}
+
+.about-step.active {
+  display: block;
+}
+
+.about-step h2 {
+  margin: 0 0 6px 0;
+  font-size: 16px;
+  color: #000;
+  text-transform: uppercase;
+}
+
+.about-step p {
   margin: 0;
-  color: var(--text-main);
   font-size: 14px;
-  line-height: 1.6;
+  line-height: 1.5;
+  color: #444;
 }
 
-
-/* Container das Abas */
-.about-tabs {
-    display: flex;
-    border-bottom: 3px solid #000;
-    background: #eee;
+/* Botão ">" Estilo Brutalista */
+.about-next-btn {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 40px;
+  background: #000;
+  color: #fff;
+  border: none;
+  border-left: 2px solid #000;
+  cursor: pointer;
+  font-family: monospace;
+  font-size: 20px;
+  font-weight: bold;
+  transition: background 0.2s;
 }
 
-.tab-btn {
-    flex: 1;
-    padding: 12px;
-    border: none;
-    border-right: 3px solid #000;
-    background: #eee;
-    font-family: 'Crimson Pro', serif;
-    font-weight: 900;
-    font-size: 13px;
-    cursor: pointer;
-    text-transform: uppercase;
-    transition: background 0.2s;
+.about-next-btn:hover {
+  background: #333;
 }
 
-.tab-btn:last-child { border-right: none; }
-
-.tab-btn.active {
-    background: #fff;
-    color: #000;
-}
-
-.tab-btn:hover:not(.active) { background: #ddd; }
-
-/* Conteúdo */
-.tab-content {
-    display: none;
-    padding: 30px;
-    min-height: 120px;
-    animation: fadeInTab 0.4s ease;
-}
-
-.tab-content.active { display: block; }
-
-@keyframes fadeInTab {
-    from { opacity: 0; transform: translateY(5px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.tab-content p {
-    font-size: 16px;
-    line-height: 1.7;
-    margin: 0;
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(10px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
     
@@ -728,23 +725,24 @@
 
 <main>
 <section class="about" id="about-section" style="display: none;">
-    <div class="about-tabs">
-        <button class="tab-btn active" onclick="openTab(event, 'tab-trabalho')">01. COMO TRABALHO</button>
-        <button class="tab-btn" onclick="openTab(event, 'tab-reflexao')">02. REFLEXÃO</button>
-        <button class="tab-btn" onclick="openTab(event, 'tab-tecnica')">03. VISÃO TÉCNICA</button>
+  <div class="about-wrapper">
+    <div class="about-content-slider">
+      <div class="about-step active">
+        <h2>COMO TRABALHO:</h2>
+        <p>Desenvolvedor Full Stack focado em <strong>Engenharia de Eficiência</strong>: projetos de alto impacto com baixo custo de produção e manutenção reduzida.</p>
+      </div>
+      <div class="about-step">
+        <h2>REFLEXÃO:</h2>
+        <p>Software não é sobre código, é sobre sustentabilidade. Se você precisa de um dev para mudar uma vírgula, você é refém, não dono do projeto.</p>
+      </div>
+      <div class="about-step">
+        <h2>VISÃO TÉCNICA:</h2>
+        <p>Transformo ideias em ativos independentes. Entrego <strong>Painel Administrativo Próprio</strong> e controle total para o cliente. Autonomia é a regra.</p>
+      </div>
     </div>
-
-    <div id="tab-trabalho" class="tab-content active">
-        <p>Atuo como <strong>Desenvolvedor Full Stack</strong> focado em arquiteturas que equilibram robustez técnica e viabilidade financeira. Desenvolvo projetos com baixo custo de produção e <strong>custo reduzido de manutenção</strong>, configurados para operar com autonomia desde o primeiro dia.</p>
-    </div>
-
-    <div id="tab-reflexao" class="tab-content">
-        <p><em>"No mercado atual, o sucesso de um software não é medido apenas pelo código, mas pela sua sustentabilidade. Se o sistema exige intervenção técnica para tarefas simples de gestão, a arquitetura falhou. O código deve ser um facilitador, não um centro de custos fixos."</em></p>
-    </div>
-
-    <div id="tab-tecnica" class="tab-content">
-        <p>Trabalho para transformar complexidade em ativos independentes. Ao entregar um <strong>Painel Administrativo Próprio</strong> e documentação funcional, transfiro o controle total para o dono da ideia. Busco parceiros que valorizam inteligência de execução e liberdade de evolução.</p>
-    </div>
+    
+    <button class="about-next-btn" onclick="nextAboutStep()" aria-label="Próximo texto">></button>
+  </div>
 </section>
 
   <div class="grid" id="lista">
@@ -1790,20 +1788,15 @@ projectForm?.addEventListener('submit', async e => {
 </script>
 
 <script>
-function openTab(evt, tabName) {
-    var i, tabcontent, tablinks;
-    tabcontent = document.getElementsByClassName("tab-content");
-    for (i = 0; i < tabcontent.length; i++) {
-        tabcontent[i].style.display = "none";
-        tabcontent[i].classList.remove("active");
-    }
-    tablinks = document.getElementsByClassName("tab-btn");
-    for (i = 0; i < tablinks.length; i++) {
-        tablinks[i].classList.remove("active");
-    }
-    document.getElementById(tabName).style.display = "block";
-    document.getElementById(tabName).classList.add("active");
-    evt.currentTarget.classList.add("active");
+let currentAboutStep = 0;
+
+function nextAboutStep() {
+    const steps = document.querySelectorAll('.about-step');
+    steps[currentAboutStep].classList.remove('active');
+    
+    currentAboutStep = (currentAboutStep + 1) % steps.length;
+    
+    steps[currentAboutStep].classList.add('active');
 }
 
 </script>
