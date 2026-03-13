@@ -20,6 +20,8 @@
 
   function cleanupAnimationArtifacts() {
     removeBySelector('.aet-physics-container, .aet-splatter-svg, .aet-message-box');
+    const overlay = document.getElementById('project-prompt-overlay');
+    if (overlay) overlay.classList.remove('aet-ball-active');
     const animationStyle = document.getElementById(animationStyleId);
     if (animationStyle) animationStyle.remove();
   }
@@ -30,13 +32,13 @@
   ensureStyle(
     animationStyleId,
     `
-      #project-prompt-overlay {
+      #project-prompt-overlay.aet-ball-active {
         display: flex !important;
         opacity: 1 !important;
         overflow: hidden;
         pointer-events: none;
       }
-      .project-prompt-card { display: none !important; }
+      #project-prompt-overlay.aet-ball-active .project-prompt-card { display: none !important; }
 
       .aet-physics-container { position: absolute; inset: 0; pointer-events: none; z-index: 10; }
 
@@ -147,6 +149,7 @@
 
   const overlay = document.getElementById('project-prompt-overlay');
   if (!overlay) return;
+  overlay.classList.add('aet-ball-active');
 
   const container = document.createElement('div');
   container.className = 'aet-physics-container';
