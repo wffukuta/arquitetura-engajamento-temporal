@@ -32,37 +32,11 @@
       overlay.style.removeProperty('pointer-events');
       overlay.setAttribute('aria-hidden', 'true');
     }
-
-    const promptCard = overlay?.querySelector('.project-prompt-card');
-    if (promptCard) {
-      promptCard.style.removeProperty('display');
-      promptCard.style.removeProperty('opacity');
-      promptCard.style.removeProperty('pointer-events');
-    }
-
     const animationStyle = document.getElementById(animationStyleId);
     if (animationStyle) animationStyle.remove();
   }
 
-  function observeScriptRemoval() {
-    if (!currentScript || !currentScript.parentNode || !window.MutationObserver) return;
-
-    removalObserver = new MutationObserver(() => {
-      if (currentScript.isConnected) return;
-      cleanupAnimationArtifacts();
-      if (removalObserver) {
-        removalObserver.disconnect();
-        removalObserver = null;
-      }
-    });
-
-    removalObserver.observe(currentScript.parentNode, { childList: true });
-  }
-
-  // Garante que uma execução anterior não deixe resíduos visuais.
-  cleanupAnimationArtifacts();
-  observeScriptRemoval();
-
+  // --- CSS ATUALIZADO ---
   ensureStyle(
     animationStyleId,
     `
@@ -71,6 +45,7 @@
         opacity: 1 !important;
         overflow: hidden;
         pointer-events: none;
+        background: rgba(0,0,0,0.1); /* Fundo leve para focar na animação */
       }
       #project-prompt-overlay.aet-ball-active .project-prompt-card { display: none !important; }
 
@@ -78,8 +53,8 @@
 
       .aet-ball {
         position: absolute;
-        width: 30px;
-        height: 30px;
+        width: 25px;
+        height: 25px;
         background: #000;
         border: 2px solid #fff;
         border-radius: 50%;
@@ -88,56 +63,59 @@
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
       }
 
+      /* Mancha posicionada no canto inferior direito */
       .aet-splatter-svg {
         position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%) scale(0);
-        width: 600px;
-        height: 600px;
+        bottom: -100px;
+        right: -100px;
+        width: 500px;
+        height: 500px;
         fill: #000;
+        transform: scale(0);
+        transform-origin: bottom right;
         transition: transform 0.6s cubic-bezier(0.19, 1, 0.22, 1);
         z-index: 5;
         pointer-events: auto;
       }
 
-      .aet-splatter-svg.active { transform: translate(-50%, -50%) scale(1.5); }
+      .aet-splatter-svg.active { transform: scale(1.5); }
       .aet-splatter-svg.retract {
-        transform: translate(-50%, -50%) scale(0);
+        transform: scale(0);
         opacity: 0;
         transition: all 0.5s ease-in;
       }
 
+      /* Caixa de mensagem colada no canto inferior direito */
       .aet-message-box {
         position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: min(500px, 80vw);
-        text-align: center;
+        bottom: 40px;
+        right: 40px;
+        width: 320px;
+        text-align: right;
         color: #fff;
         opacity: 0;
-        transition: opacity 0.5s ease;
+        transform: translateY(20px);
+        transition: all 0.5s ease;
         z-index: 15;
         pointer-events: none;
-        background: #000;
         padding: 20px;
-        border: 2px solid #fff;
       }
 
-      .aet-message-box.active { opacity: 1; pointer-events: auto; }
+      .aet-message-box.active { opacity: 1; transform: translateY(0); pointer-events: auto; }
 
       .aet-btn-ok {
         background: #fff;
         color: #000;
         border: none;
-        padding: 10px 40px;
+        padding: 10px 30px;
         font-weight: 900;
         cursor: pointer;
         text-transform: uppercase;
-        box-shadow: 5px 5px 0 #333;
-        transition: all 0.2s;
+        margin-top: 15px;
+        box-shadow: 4px 4px 0 #333;
+        transition: transform 0.1s;
       }
+      .aet-btn-ok:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 #333; }
     `
   );
 
@@ -147,35 +125,18 @@
       .column-j-data {
         margin-top: 15px;
         border-top: 2px dashed #000;
-        padding-top: 10px;
+        padding: 10px 8px;
         font-size: 12px;
         background: #f9f9f9;
-        padding: 8px;
         overflow: hidden;
+        transition: all 0.5s ease;
       }
-
       .column-j-data.aet-pending {
-        visibility: hidden;
-        height: 0;
-        opacity: 0;
-        margin-top: 0;
-        padding-top: 0;
-        padding-bottom: 0;
-        border-top: none;
+        visibility: hidden; height: 0; opacity: 0; margin: 0; padding: 0;
       }
-
       .column-j-data.aet-reveal {
-        visibility: visible;
-        height: auto;
-        opacity: 1;
-        animation: slideUp 0.5s ease forwards;
+        visibility: visible; height: auto; opacity: 1;
       }
-
-      @keyframes slideUp {
-        from { transform: translateY(10px); }
-        to { transform: translateY(0); }
-      }
-
       .j-row { display: flex; justify-content: space-between; margin-bottom: 3px; }
       .j-val { font-weight: 700; color: #000; }
     `
@@ -196,57 +157,33 @@
   const splatter = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   splatter.setAttribute('viewBox', '0 0 100 100');
   splatter.setAttribute('class', 'aet-splatter-svg');
-  splatter.innerHTML = '<path d="M50,10 Q60,5 70,15 T85,40 Q95,50 85,65 T65,85 Q50,95 35,85 T15,65 Q5,50 15,35 T35,10 Z" />';
+  // Path de mancha orgânica
+  splatter.innerHTML = '<path d="M100,100 L100,40 Q90,35 80,45 T60,40 Q50,30 40,50 T20,70 Q10,85 30,100 Z" />';
   overlay.appendChild(splatter);
 
   const msgBox = document.createElement('div');
   msgBox.className = 'aet-message-box';
   msgBox.innerHTML = `
-    <h2 style="font-size:24px; text-transform:uppercase; margin:0 0 15px; border-bottom:2px solid #fff; display:inline-block;">Custo Zero Real</h2>
-    <p style="font-size:16px; line-height:1.5; margin-bottom:20px;">Minha arquitetura é projetada para eliminar mensalidades. Desenvolvimento eficiente e manutenção inexistente através de sistemas serverless.</p>
+    <h2 style="font-size:20px; text-transform:uppercase; margin:0 0 10px; border-bottom:2px solid #fff; display:inline-block;">Custo Zero Real</h2>
+    <p style="font-size:14px; line-height:1.4; margin:0;">Arquitetura serverless: sem mensalidade, sem manutenção, eficiência total.</p>
     <button class="aet-btn-ok">OK</button>
   `;
   overlay.appendChild(msgBox);
 
-  let posX = 0;
-  let posY = 0;
-  let velX = 6;
-  let velY = 2;
-  const gravity = 0.5;
-  const bounce = 0.7;
+  // --- LÓGICA DA FÍSICA ---
+  let posX = 50;
+  let posY = 50;
+  let velX = 8;
+  let velY = 3;
+  const gravity = 0.4;
+  const bounce = 0.65;
   let hasExploded = false;
-
-  function updateCardData(card) {
-    const existing = card.querySelector('.column-j-data');
-    if (existing) {
-      existing.classList.remove('aet-pending');
-      existing.classList.add('aet-reveal');
-      return existing;
-    }
-
-    const infoJ = document.createElement('div');
-    infoJ.className = 'column-j-data aet-pending';
-    infoJ.innerHTML = `
-      <div class="j-row"><span>MANUTENÇÃO:</span> <span class="j-val">R$ 0,00</span></div>
-      <div class="j-row"><span>SERVIDOR:</span> <span class="j-val">GRATUITO</span></div>
-      <div class="j-row"><span>ATUALIZAÇÃO:</span> <span class="j-val">AUTÔNOMA</span></div>
-    `;
-
-    const actions = card.querySelector('.actions');
-    if (actions) {
-      card.insertBefore(infoJ, actions);
-    } else {
-      card.appendChild(infoJ);
-    }
-
-    return infoJ;
-  }
 
   function explode() {
     hasExploded = true;
     ball.style.display = 'none';
     splatter.classList.add('active');
-    setTimeout(() => msgBox.classList.add('active'), 400);
+    setTimeout(() => msgBox.classList.add('active'), 300);
   }
 
   function updatePhysics() {
@@ -259,20 +196,15 @@
     const maxX = window.innerWidth - 30;
     const maxY = window.innerHeight - 30;
 
-    if (posY > maxY) {
-      posY = maxY;
-      velY *= -bounce;
-      velX *= 0.9;
-    }
+    // Rebate nas paredes
+    if (posY > maxY) { posY = maxY; velY *= -bounce; }
+    if (posX > maxX) { posX = maxX; velX *= -bounce; }
+    if (posX < 0) { posX = 0; velX *= -bounce; }
 
-    if (posX > maxX || posX < 0) {
-      velX *= -1;
-    }
-
-    const reachedCenter = Math.hypot(posX - window.innerWidth / 2, posY - window.innerHeight / 2) < 100;
-    const stoppedNearGround = Math.abs(velY) < 1 && posY > maxY - 10;
-
-    if (reachedCenter || stoppedNearGround) {
+    // Condição de explosão: quando chegar perto do canto inferior direito
+    const distToCorner = Math.hypot(posX - window.innerWidth, posY - window.innerHeight);
+    
+    if (distToCorner < 80 || (posX > window.innerWidth - 60 && posY > window.innerHeight - 60)) {
       explode();
       return;
     }
@@ -281,24 +213,37 @@
     requestAnimationFrame(updatePhysics);
   }
 
+  // --- AÇÃO DO BOTÃO OK ---
   msgBox.querySelector('.aet-btn-ok').onclick = function () {
     msgBox.classList.remove('active');
     splatter.classList.add('retract');
 
-    document.querySelectorAll('.card').forEach(card => {
-      const dataDiv = updateCardData(card);
+    // Inicia a animação nos cards
+    document.querySelectorAll('.card').forEach((card, index) => {
+      // Cria o elemento se não existir
+      let dataDiv = card.querySelector('.column-j-data');
+      if (!dataDiv) {
+        dataDiv = document.createElement('div');
+        dataDiv.className = 'column-j-data aet-pending';
+        dataDiv.innerHTML = `
+          <div class="j-row"><span>MANUTENÇÃO:</span> <span class="j-val">R$ 0,00</span></div>
+          <div class="j-row"><span>SERVIDOR:</span> <span class="j-val">GRATUITO</span></div>
+        `;
+        const actions = card.querySelector('.actions');
+        actions ? card.insertBefore(dataDiv, actions) : card.appendChild(dataDiv);
+      }
+
+      // Delay cascata para os cards aparecerem
       setTimeout(() => {
-        if (!dataDiv) return;
         dataDiv.classList.remove('aet-pending');
         dataDiv.classList.add('aet-reveal');
-      }, 800);
+      }, 200 + (index * 150));
     });
 
+    // Finaliza e limpa tudo
     setTimeout(() => {
-      overlay.classList.remove('visible');
-      overlay.setAttribute('aria-hidden', 'true');
       cleanupAnimationArtifacts();
-    }, 1300);
+    }, 1500);
   };
 
   updatePhysics();
