@@ -1,7 +1,10 @@
 <script>
 (function () {
+  const currentScript = document.currentScript;
   const animationStyleId = 'aet-ball-animation-styles';
   const cardStyleId = 'aet-ball-card-styles';
+
+  let removalObserver = null;
 
   function ensureStyle(id, cssText) {
     let styleElement = document.getElementById(id);
@@ -21,13 +24,44 @@
   function cleanupAnimationArtifacts() {
     removeBySelector('.aet-physics-container, .aet-splatter-svg, .aet-message-box');
     const overlay = document.getElementById('project-prompt-overlay');
-    if (overlay) overlay.classList.remove('aet-ball-active');
+    if (overlay) {
+      overlay.classList.remove('aet-ball-active');
+      overlay.style.removeProperty('display');
+      overlay.style.removeProperty('opacity');
+      overlay.style.removeProperty('overflow');
+      overlay.style.removeProperty('pointer-events');
+      overlay.setAttribute('aria-hidden', 'true');
+    }
+
+    const promptCard = overlay?.querySelector('.project-prompt-card');
+    if (promptCard) {
+      promptCard.style.removeProperty('display');
+      promptCard.style.removeProperty('opacity');
+      promptCard.style.removeProperty('pointer-events');
+    }
+
     const animationStyle = document.getElementById(animationStyleId);
     if (animationStyle) animationStyle.remove();
   }
 
+  function observeScriptRemoval() {
+    if (!currentScript || !currentScript.parentNode || !window.MutationObserver) return;
+
+    removalObserver = new MutationObserver(() => {
+      if (currentScript.isConnected) return;
+      cleanupAnimationArtifacts();
+      if (removalObserver) {
+        removalObserver.disconnect();
+        removalObserver = null;
+      }
+    });
+
+    removalObserver.observe(currentScript.parentNode, { childList: true });
+  }
+
   // Garante que uma execução anterior não deixe resíduos visuais.
   cleanupAnimationArtifacts();
+  observeScriptRemoval();
 
   ensureStyle(
     animationStyleId,
@@ -261,7 +295,8 @@
     });
 
     setTimeout(() => {
-      overlay.style.display = 'none';
+      overlay.classList.remove('visible');
+      overlay.setAttribute('aria-hidden', 'true');
       cleanupAnimationArtifacts();
     }, 1300);
   };
@@ -269,4 +304,3 @@
   updatePhysics();
 })();
 </script>
-
