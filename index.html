@@ -564,6 +564,33 @@
       pointer-events: none;
     }
 
+    .modo-toggle.awaiting-project-prompt {
+      animation: questionPulseDark 1.6s ease-in-out infinite;
+      background: #1a1420;
+      box-shadow: 4px 4px 0 #000000, 0 0 0 1px rgba(255, 255, 255, 0.06) inset;
+    }
+
+    .modo-toggle.awaiting-project-prompt .modo-toggle__icon {
+      background: #111111;
+      color: #f6f1ff;
+    }
+
+    @keyframes questionPulseDark {
+      0%,
+      100% {
+        background: #2a1a24;
+        border-color: #2f2430;
+      }
+      33% {
+        background: #2b2518;
+        border-color: #312b1f;
+      }
+      66% {
+        background: #18232f;
+        border-color: #1f2c3a;
+      }
+    }
+
     .glitch-transition {
       position: fixed;
       inset: 0;
@@ -1573,8 +1600,27 @@ const projectForm = document.getElementById('project-prompt-form');
 const projectPromptInput = document.getElementById('project-prompt-input');
 const projectPromptStatus = document.getElementById('project-prompt-status');
 const btnModos = document.getElementById('modo-toggle');
+const btnModosIcon = document.getElementById('modo-toggle-icon');
 
 let promptVisible = false;
+let aguardandoToqueParaPrompt = false;
+
+function prepararDisparoPromptProjeto() {
+  if (!btnModos || promptVisible || aguardandoToqueParaPrompt) return;
+
+  disableModoAutoControl();
+  aguardandoToqueParaPrompt = true;
+  btnModos.classList.add('awaiting-project-prompt');
+  btnModos.style.opacity = '1';
+  btnModos.style.pointerEvents = 'auto';
+  btnModos.removeAttribute('hidden');
+  btnModos.setAttribute('aria-hidden', 'false');
+  btnModos.setAttribute('title', 'Toque para iniciar a próxima pergunta');
+
+  if (btnModosIcon) {
+    btnModosIcon.textContent = '?';
+  }
+}
 
 function dispararPromptProjeto() {
   if (promptVisible || !promptOverlay) return;
@@ -1586,8 +1632,10 @@ function dispararPromptProjeto() {
   if (projectPromptInput) projectPromptInput.value = '';
 
   promptVisible = true;
+  aguardandoToqueParaPrompt = false;
 
   if (btnModos) {
+    btnModos.classList.remove('awaiting-project-prompt');
     btnModos.style.pointerEvents = 'none';
     btnModos.style.opacity = '0';
     btnModos.setAttribute('aria-hidden', 'true');
@@ -1644,6 +1692,11 @@ btnNao?.addEventListener('click', () => {
 });
 
 window.addEventListener('modo:all-sources-completed', () => {
+  prepararDisparoPromptProjeto();
+});
+
+btnModos?.addEventListener('click', () => {
+  if (!aguardandoToqueParaPrompt) return;
   dispararPromptProjeto();
 });
 
