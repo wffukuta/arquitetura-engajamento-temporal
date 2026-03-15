@@ -52,17 +52,23 @@ Em vez de entregar toda a informação de imediato, esta arquitetura utiliza cic
 ```
 
 <br><br>
-## **Decisões de Engenharia & Arquitetura**
-A escolha das tecnologias foi pautada em eficiência operacional e escalabilidade de conteúdo:
+## **QUANDO USAR A AET**
+A Arquitetura de Engajamento Temporal foi desenhada para players do mercado de Infoprodutos, Consultoria de Alto Ticket e Engenharia de Vendas. A escolha das camadas estratégicas (demonstradas no código de exemplo) foca em quem precisa de:
 
-> Estratégia de Headless CMS (Google Sheets)
-Utilizo o Google Sheets (via TSV) como fonte de dados. Isso permite atualizações em tempo real enquanto gerencio varios projetos através de uma unica planilha como painel sem necessidade de novos deploys, garantindo uma separação total entre dados e renderização.
+> Venda de Produtos Intelectuais e Consultorias
+Para negócios onde a decisão de compra exige reflexão profunda, leitura técnica, compreensão de conceitos complexos e reconhecimento de autoridade. A AET impede o consumo acelerado e força a absorção do conteúdo em etapas.
 
-> Micro-Frontends de Experiência (/modo/)
-Os modos interativos são isolados em um ambiente Sandbox. Essa modularidade permite injetar novas tecnologias (Canvas, WebGL, Three.js) de forma desacoplada, facilitando testes de retenção sem risco de regressão no core do sistema.
+> Qualificação de Leads de Alta Performance
+Se o seu objetivo é filtrar apenas usuários que realmente valorizam o seu conhecimento. A arquitetura atua como um funil de paciência e interesse: só chega ao final quem percorreu o tempo de reflexão necessário, estando mais favorável a iniciar uma conversa sobre ideias de projetos.
 
-> Persistência e Captura (Firebase)
-Integração com Firebase Realtime DB para captura assíncrona de leads, armazenando não apenas o contato, mas o contexto da jornada do usuário.
+> Construção de Autoridade via Recompensa
+A AET é ideal para estratégias onde a autoridade é construída gradualmente. Ao oferecer recompensas e gatilhos de informação nos intervalos de cronômetro, você mantém o usuário no fluxo sem que ele sinta o tempo passar e gradualmente desacelera a mente do usuário, transformando o "tempo de espera" em tempo de aprendizado e criação de autoridade.
+
+> Combate à Obesidade Mental e Ansiedade de Consumo
+Em mercados saturados, o usuário tende a "escanear" páginas de vendas sem ler. A AET desacelera a mente do usuário, criando janelas de foco onde a injeção de informação ocorre no momento exato em que o cérebro está pronto para a próxima peça do quebra-cabeça.
+
+> Fechamento de Negócios de Alto Ticket
+Para vendas que exigem uma negociação direta ou fechamento via WhatsApp/CRM. O lead que chega ao final do fluxo da AET já passou por um processo de reflexão guiada e injeção de autoridade, chegando ao vendedor muito mais pronto e convencido do valor da proposta.
 
 
 
