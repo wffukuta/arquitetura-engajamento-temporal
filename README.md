@@ -57,6 +57,7 @@ A Arquitetura de Engajamento Temporal é sustentada por três pilares fundamenta
 📦 Arquitetura de Engajamento Temporal
  ┣ 📜 index.html------------------# Arquitetura Aplicada
  ┣ 📂 modo/-----------------------# Micro-experiências de Recompensa
+ ┣ 📂 assets/---------------------# Arquivos do modo
  ┗ 📜 README----------------------# Documentação estratégica
 ```
 
