@@ -61,7 +61,7 @@ A Arquitetura de Engajamento Temporal é sustentada por três pilares fundamenta
 ```
 
 <br><br>
-## **QUANDO USAR A AET**
+## **QUANDO APLICAR**
 A Arquitetura de Engajamento Temporal foi desenhada para players do mercado de Infoprodutos, Consultoria de Alto Ticket e Engenharia de Vendas. A escolha das camadas estratégicas (demonstradas no código de exemplo) foca em quem precisa de:
 
 > **VENDA DE PRODUTOS INTELECTUAIS E CONSULTORIAS**:<br>
