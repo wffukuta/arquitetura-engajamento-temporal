@@ -302,6 +302,21 @@
       z-index: 2;
     }
 
+    .video-modal__drag-handle {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 34px;
+      cursor: grab;
+      z-index: 1;
+      background: linear-gradient(to bottom, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0));
+    }
+
+    .video-modal__drag-handle.is-dragging {
+      cursor: grabbing;
+    }
+
     .video-modal__resize {
       position: absolute;
       top: 0;
@@ -838,6 +853,7 @@
 </main>
 
 <div class="video-modal" id="video-modal" aria-hidden="true" hidden>
+  <div class="video-modal__drag-handle" id="video-drag-handle" aria-label="Arrastar janela"></div>
   <div class="video-modal__resize" id="video-resize" aria-label="Redimensionar janela"></div>
   <button class="video-modal__close" id="video-close" aria-label="Fechar vídeo">×</button>
   <iframe id="video-frame" title="Player do YouTube" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
@@ -1396,6 +1412,7 @@ const videoModal = document.getElementById('video-modal');
 const videoFrame = document.getElementById('video-frame');
 const videoClose = document.getElementById('video-close');
 const videoResize = document.getElementById('video-resize');
+const videoDragHandle = document.getElementById('video-drag-handle');
 
 const modalState = {
   width: 420,
@@ -1407,6 +1424,17 @@ const modalState = {
 };
 
 function applyModalPosition() {
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+
+  modalState.width = Math.min(modalState.width, Math.max(modalState.minWidth, viewportWidth - 20));
+  modalState.height = Math.min(modalState.height, Math.max(modalState.minHeight, viewportHeight - 20));
+
+  const maxX = Math.max(10, viewportWidth - modalState.width - 10);
+  const maxY = Math.max(10, viewportHeight - modalState.height - 10);
+  modalState.x = Math.min(Math.max(10, modalState.x), maxX);
+  modalState.y = Math.min(Math.max(10, modalState.y), maxY);
+
   videoModal.style.width = `${modalState.width}px`;
   videoModal.style.height = `${modalState.height}px`;
   videoModal.style.left = `${modalState.x}px`;
@@ -1514,6 +1542,36 @@ videoResize.addEventListener('pointerdown', event => {
   }
 
   function onPointerUp() {
+    window.removeEventListener('pointermove', onPointerMove);
+    window.removeEventListener('pointerup', onPointerUp);
+  }
+
+  window.addEventListener('pointermove', onPointerMove);
+  window.addEventListener('pointerup', onPointerUp);
+});
+
+videoDragHandle.addEventListener('pointerdown', event => {
+  event.preventDefault();
+
+  const startX = event.clientX;
+  const startY = event.clientY;
+  const startLeft = modalState.x;
+  const startTop = modalState.y;
+
+  videoDragHandle.classList.add('is-dragging');
+
+  function onPointerMove(moveEvent) {
+    const deltaX = moveEvent.clientX - startX;
+    const deltaY = moveEvent.clientY - startY;
+
+    modalState.x = startLeft + deltaX;
+    modalState.y = startTop + deltaY;
+
+    applyModalPosition();
+  }
+
+  function onPointerUp() {
+    videoDragHandle.classList.remove('is-dragging');
     window.removeEventListener('pointermove', onPointerMove);
     window.removeEventListener('pointerup', onPointerUp);
   }
