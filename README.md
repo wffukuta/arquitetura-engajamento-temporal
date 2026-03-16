@@ -23,7 +23,7 @@ O tempo como mecanismo de conversão. Este projeto subverte o portfólio tradici
 ---
 
 <br><br>
-## **A METODOLOGIA**
+## **SOBRE METODOLOGIA**
 Em vez de entregar toda a informação de imediato, esta arquitetura utiliza ciclos temporais para modular a experiência do usuário, baseando-se em quatro pilares estratégicos:
 
 > **AUTORIDADE:** Exposição técnica imediata para estabelecer autoridade. O visitante encontra projetos desenvolvidos, repositórios, vídeos e histórico de produção. Essa etapa responde à pergunta: Essa pessoa realmente consegue desenvolver um projeto? Sem essa validação, a conversão é enfraquecida.
@@ -42,10 +42,10 @@ Em vez de entregar toda a informação de imediato, esta arquitetura utiliza cic
 
 
 <br><br>
-## **A ARQUITETURA**
+## **SOBRE ARQUITETURA**
 A Arquitetura de Engajamento Temporal é sustentada por três pilares fundamentais que garantem a execução da metodologia, independentemente da tecnologia utilizada.
 
-> **HEADLESS:** Como os modos interativos podem ser densos (Canvas, WebGL, vídeos), a arquitetura garante que o core do sistema seja carregado instantaneamente. Os módulos pesados são injetados sob demanda, otimizando o LCP (Largest Contentful Paint) e mantendo a retenção desde o primeiro segundo.<br><br>
+> **HEADLESS:** Como os modos interativos podem ser densos, a arquitetura garante que o core do sistema seja carregado instantaneamente. Os módulos pesados são injetados sob demanda, otimizando o LCP (Largest Contentful Paint) e mantendo a retenção desde o primeiro segundo.<br><br>
 > **TIMER ENGINE:** Ao desacelerar o ritmo de consumo, a arquitetura prepara o terreno psicológico do usuário. Uma mente desacelerada e recompensada torna-se muito mais receptiva à injeção de informações de alto valor, consolidando a autoridade do autor antes mesmo da oferta final.<br><br>
 > **PERSISTÊNCIA DE JORNADA:** Para saber onde o usuário parou.
 ---
