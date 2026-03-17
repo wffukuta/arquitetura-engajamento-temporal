@@ -31,27 +31,6 @@
     let animationStarted = false;
     let releaseTriggered = false;
     let releaseStartTime = 0;
-    let hoveringSeed = false;
-
-    const wateringCursor = document.createElement('div');
-    wateringCursor.setAttribute('aria-hidden', 'true');
-    Object.assign(wateringCursor.style, {
-        position: 'fixed',
-        top: '0',
-        left: '0',
-        width: '34px',
-        height: '34px',
-        pointerEvents: 'none',
-        zIndex: '9999',
-        opacity: '0',
-        transform: 'translate(-100px, -100px)',
-        transition: 'opacity 0.15s ease',
-        backgroundRepeat: 'no-repeat',
-        backgroundPosition: 'center',
-        backgroundSize: 'contain',
-        backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cg fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cellipse cx='24' cy='30' rx='14' ry='11' fill='%23fff'/%3E%3Cpath d='M37 28h11c6 0 9 3 9 8v5'/%3E%3Cpath d='M14 20c0-6 5-11 11-11s11 5 11 11'/%3E%3Cpath d='M53 41l5 3'/%3E%3Cpath d='M51 46l6 4'/%3E%3Cpath d='M48 51l5 4'/%3E%3C/g%3E%3C/svg%3E\")"
-    });
-    document.body.appendChild(wateringCursor);
 
     function startAnimation() {
         if (animationStarted) return;
@@ -196,15 +175,15 @@
         if (releaseTriggered) return;
         releaseTriggered = true;
         releaseStartTime = Date.now();
-        wateringCursor.style.opacity = '0';
-        hoveringSeed = false;
         startAnimation();
     }
 
-    function getSeedUnderPointer(clientX, clientY, now = Date.now()) {
+    function handlePointerMove(event) {
+        if (releaseTriggered) return;
         const rect = canvas.getBoundingClientRect();
-        const x = clientX - rect.left;
-        const y = clientY - rect.top;
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        const now = Date.now();
 
         for (let i = 0; i < seeds.length; i++) {
             const seed = seeds[i];
@@ -213,43 +192,9 @@
             const dx = x - state.drawX;
             const dy = y - state.drawY;
             if ((dx * dx) + (dy * dy) <= Math.pow(state.drawRadius + 3, 2)) {
-                return seed;
+                triggerRelease();
+                break;
             }
-        }
-
-        return null;
-    }
-
-    function handlePointerMove(event) {
-        if (releaseTriggered) return;
-        const now = Date.now();
-        const seed = getSeedUnderPointer(event.clientX, event.clientY, now);
-
-        wateringCursor.style.transform = `translate(${event.clientX + 14}px, ${event.clientY + 8}px)`;
-        hoveringSeed = !!seed;
-        wateringCursor.style.opacity = hoveringSeed ? '1' : '0';
-    }
-
-    function handlePointerLeave() {
-        hoveringSeed = false;
-        wateringCursor.style.opacity = '0';
-    }
-
-    function handlePointerDown(event) {
-        if (releaseTriggered) return;
-        const seed = getSeedUnderPointer(event.clientX, event.clientY);
-        if (seed) {
-            triggerRelease();
-        }
-    }
-
-    function handleTouchStart(event) {
-        if (releaseTriggered) return;
-        if (!event.touches || event.touches.length === 0) return;
-        const touch = event.touches[0];
-        const seed = getSeedUnderPointer(touch.clientX, touch.clientY);
-        if (seed) {
-            triggerRelease();
         }
     }
 
@@ -287,9 +232,6 @@
     });
 
     window.addEventListener('mousemove', handlePointerMove);
-    window.addEventListener('mouseleave', handlePointerLeave);
-    window.addEventListener('mousedown', handlePointerDown);
-    window.addEventListener('touchstart', handleTouchStart, { passive: true });
 
     init();
     animate();
