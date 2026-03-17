@@ -160,6 +160,8 @@
 
   const burstSound = new Audio('../assets/bolaestourando.mp3');
   burstSound.preload = 'auto';
+  const clickSound = new Audio('../assets/clique.mp3');
+  clickSound.preload = 'auto';
 
   const container = document.createElement('div');
   container.className = 'aet-physics-container';
@@ -235,6 +237,8 @@
 
   // --- AÇÃO DO BOTÃO OK ---
   msgBox.querySelector('.aet-btn-ok').onclick = function () {
+    clickSound.currentTime = 0;
+    clickSound.play().catch(() => {});
     msgBox.classList.remove('active');
     splatter.classList.add('retract');
 
