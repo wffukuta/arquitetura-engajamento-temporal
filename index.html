@@ -1970,8 +1970,14 @@ projectForm?.addEventListener('submit', async e => {
 
 <script>
 let currentAboutStep = 0;
+const aboutNextAudio = new Audio('./assets/folhaspassando.mp3');
 
 function nextAboutStep() {
+    aboutNextAudio.currentTime = 0;
+    aboutNextAudio.play().catch(error => {
+        console.warn('Não foi possível reproduzir o áudio do botão avançar:', error);
+    });
+
     const steps = document.querySelectorAll('.about-step');
     steps[currentAboutStep].classList.remove('active');
     
