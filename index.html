@@ -1104,6 +1104,15 @@ let modoControlDisabled = false;
 const modoToggleButton = document.getElementById('modo-toggle');
 const modoToggleIcon = document.getElementById('modo-toggle-icon');
 const glitchTransition = document.getElementById('glitch-transition');
+const modoTickAudio = new Audio('./assets/tictac.mp3');
+modoTickAudio.preload = 'auto';
+
+function playModoTickSound() {
+  modoTickAudio.currentTime = 0;
+  modoTickAudio.play().catch(error => {
+    console.warn('Não foi possível reproduzir tictac.mp3:', error);
+  });
+}
 
 function getRandomModoInterval() {
   const seconds = Math.floor(Math.random() * (75 - 30 + 1)) + 30;
@@ -1314,6 +1323,7 @@ function applyModoPayload(payload) {
   }
 
   lastModoSource = source;
+  playModoTickSound();
 
   if (completedRound) {
     window.dispatchEvent(new CustomEvent('modo:all-sources-completed'));
@@ -1391,6 +1401,7 @@ modoToggleButton.addEventListener('click', () => {
     return;
   }
 
+  playModoTickSound();
   resumeModoTimer();
 });
 
