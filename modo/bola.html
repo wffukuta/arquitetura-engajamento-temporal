@@ -158,6 +158,9 @@
   if (!overlay) return;
   overlay.classList.add('aet-ball-active');
 
+  const burstSound = new Audio('../assets/bolaestourando.mp3');
+  burstSound.preload = 'auto';
+
   const container = document.createElement('div');
   container.className = 'aet-physics-container';
   overlay.appendChild(container);
@@ -194,6 +197,11 @@
   function explode() {
     hasExploded = true;
     ball.style.display = 'none';
+    burstSound.currentTime = 0;
+    const playPromise = burstSound.play();
+    if (playPromise && typeof playPromise.catch === 'function') {
+      playPromise.catch(() => {});
+    }
     splatter.classList.add('active');
     setTimeout(() => msgBox.classList.add('active'), 300);
   }
