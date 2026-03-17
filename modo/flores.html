@@ -23,41 +23,25 @@
 
     const ctx = canvas.getContext('2d', { alpha: true });
     let flowers = [];
+    let seeds = [];
     const DURATION_MS = 20000; 
     let startTime = Date.now();
     const bloomSound = new Audio('../assets/floresnascendo.mp3');
     bloomSound.preload = 'auto';
     let animationStarted = false;
+    let releaseTriggered = false;
+    let releaseStartTime = 0;
 
     function startAnimation() {
         if (animationStarted) return;
         animationStarted = true;
-        init();
+        startTime = Date.now();
         playBloomSound();
-        animate();
-    }
-
-    function setupUserInteractionFallback() {
-        const unlockAndStart = () => {
-            startAnimation();
-            window.removeEventListener('pointerdown', unlockAndStart);
-            window.removeEventListener('keydown', unlockAndStart);
-            window.removeEventListener('touchstart', unlockAndStart);
-        };
-
-        window.addEventListener('pointerdown', unlockAndStart, { once: true });
-        window.addEventListener('keydown', unlockAndStart, { once: true });
-        window.addEventListener('touchstart', unlockAndStart, { once: true });
     }
 
     function playBloomSound() {
         bloomSound.currentTime = 0;
-        const playPromise = bloomSound.play();
-        if (playPromise && typeof playPromise.catch === 'function') {
-            playPromise.catch(() => {
-                setupUserInteractionFallback();
-            });
-        }
+        bloomSound.play();
 
         setTimeout(() => {
             bloomSound.pause();
@@ -135,27 +119,122 @@
         }
     }
 
+    class Seed {
+        constructor(index, total) {
+            const spread = canvas.width * 0.8;
+            const startX = (canvas.width - spread) / 2;
+            this.x = startX + (index / Math.max(1, total - 1)) * spread + (Math.random() - 0.5) * 12;
+            this.y = -Math.random() * canvas.height * 0.7;
+            this.targetY = canvas.height - (Math.random() * 8 + 3);
+            this.vy = Math.random() * 0.5 + 1.6;
+            this.radius = Math.random() * 2 + 2;
+            this.pulseOffset = Math.random() * Math.PI * 2;
+            this.shakeOffset = Math.random() * Math.PI * 2;
+        }
+
+        update(now) {
+            if (this.y < this.targetY) {
+                this.y += this.vy;
+                if (this.y > this.targetY) this.y = this.targetY;
+            }
+
+            const pulse = 1 + Math.sin(now / 250 + this.pulseOffset) * 0.16;
+            const shake = Math.sin(now / 130 + this.shakeOffset) * 0.7;
+            let shrink = 1;
+
+            if (releaseTriggered) {
+                const t = Math.min(1, (now - releaseStartTime) / 1200);
+                shrink = 1 - t;
+            }
+
+            return {
+                drawX: this.x + shake,
+                drawY: this.y,
+                drawRadius: Math.max(0, this.radius * pulse * shrink)
+            };
+        }
+    }
+
     function init() {
         setupCanvas();
         flowers = [];
-        // Aumentei para 80 flores para um visual mais denso nas bordas
         for (let i = 0; i < 80; i++) {
             flowers.push(new Flower());
+        }
+
+        seeds = [];
+        for (let i = 0; i < 95; i++) {
+            seeds.push(new Seed(i, 95));
+        }
+        releaseTriggered = false;
+        releaseStartTime = 0;
+        animationStarted = false;
+    }
+
+    function triggerRelease() {
+        if (releaseTriggered) return;
+        releaseTriggered = true;
+        releaseStartTime = Date.now();
+        startAnimation();
+    }
+
+    function handlePointerMove(event) {
+        if (releaseTriggered) return;
+        const rect = canvas.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        const now = Date.now();
+
+        for (let i = 0; i < seeds.length; i++) {
+            const seed = seeds[i];
+            const state = seed.update(now);
+            if (state.drawRadius <= 0) continue;
+            const dx = x - state.drawX;
+            const dy = y - state.drawY;
+            if ((dx * dx) + (dy * dy) <= Math.pow(state.drawRadius + 3, 2)) {
+                triggerRelease();
+                break;
+            }
         }
     }
 
     function animate() {
+        const now = Date.now();
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        flowers.forEach(f => f.draw());
+
+        let visibleSeeds = 0;
+        seeds.forEach(seed => {
+            const state = seed.update(now);
+            if (state.drawRadius <= 0) return;
+            visibleSeeds += 1;
+            ctx.beginPath();
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = '#ffffff';
+            ctx.fillStyle = '#000000';
+            ctx.arc(state.drawX, state.drawY, state.drawRadius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+        });
+
+        if (animationStarted) {
+            flowers.forEach(f => f.draw());
+        }
+
+        if (releaseTriggered && visibleSeeds === 0 && !animationStarted) {
+            startAnimation();
+        }
+
         requestAnimationFrame(animate);
     }
 
     window.addEventListener('resize', () => {
-        setupCanvas();
-        init(); // Reinicia para recalcular posições no resize
+        init();
     });
 
-    setTimeout(startAnimation, 100);
+    window.addEventListener('mousemove', handlePointerMove);
+
+    init();
+    animate();
 
 })();
 </script>
