@@ -1727,6 +1727,8 @@ const chatLogin = document.getElementById('chat-login');
 const chatForm = document.getElementById('chat-form');
 const chatInput = document.getElementById('chat-input');
 const chatSend = document.getElementById('chat-send');
+const chatClickSound = new Audio('./assets/clique.mp3');
+chatClickSound.preload = 'auto';
 
 const promptOverlay = document.getElementById('project-prompt-overlay');
 const btnTenho = document.getElementById('project-prompt-yes');
@@ -1879,6 +1881,8 @@ function toggleChat(open) {
 }
 
 chatToggle.addEventListener('click', () => {
+  chatClickSound.currentTime = 0;
+  chatClickSound.play().catch(() => {});
   toggleChat(!chatWidget.classList.contains('open'));
 });
 
