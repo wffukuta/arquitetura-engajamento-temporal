@@ -1100,6 +1100,7 @@ let preloadModoPromise = null;
 const activeModoScripts = [];
 let unusedModoSources = [];
 let modoControlDisabled = false;
+let modoPausedByVisibility = false;
 
 const modoToggleButton = document.getElementById('modo-toggle');
 const modoToggleIcon = document.getElementById('modo-toggle-icon');
@@ -1218,6 +1219,23 @@ function resumeModoTimer() {
   const duration = modoRemainingTime > 0 ? modoRemainingTime : getRandomModoInterval();
   startModoTimer(duration);
   preloadNextModoScripts();
+}
+
+function handleModoVisibilityChange() {
+  if (modoControlDisabled) return;
+
+  if (document.hidden) {
+    if (modoAutoEnabled) {
+      modoPausedByVisibility = true;
+      pauseModoTimer();
+    }
+    return;
+  }
+
+  if (modoPausedByVisibility) {
+    modoPausedByVisibility = false;
+    resumeModoTimer();
+  }
 }
 
 function clearModoScripts() {
@@ -1404,6 +1422,8 @@ window.addEventListener('load', () => {
 modoToggleButton.addEventListener('click', () => {
   if (modoControlDisabled) return;
 
+  modoPausedByVisibility = false;
+
   if (modoAutoEnabled) {
     pauseModoTimer();
     return;
@@ -1412,6 +1432,8 @@ modoToggleButton.addEventListener('click', () => {
   playModoTickSound();
   resumeModoTimer();
 });
+
+document.addEventListener('visibilitychange', handleModoVisibilityChange);
 
 document.getElementById('about-section').style.display = 'none';
 </script>
