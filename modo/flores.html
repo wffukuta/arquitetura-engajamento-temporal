@@ -25,6 +25,21 @@
     let flowers = [];
     const DURATION_MS = 20000; 
     let startTime = Date.now();
+    const bloomSound = new Audio('/assets/floresnascendo.mp3');
+    bloomSound.preload = 'auto';
+
+    function playBloomSound() {
+        bloomSound.currentTime = 0;
+        const playPromise = bloomSound.play();
+        if (playPromise && typeof playPromise.catch === 'function') {
+            playPromise.catch(() => {});
+        }
+
+        setTimeout(() => {
+            bloomSound.pause();
+            bloomSound.currentTime = 0;
+        }, DURATION_MS);
+    }
 
     function setupCanvas() {
         canvas.width = header.offsetWidth;
@@ -118,6 +133,7 @@
 
     setTimeout(() => {
         init();
+        playBloomSound();
         animate();
     }, 100);
 
