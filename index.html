@@ -1105,12 +1105,20 @@ const modoToggleButton = document.getElementById('modo-toggle');
 const modoToggleIcon = document.getElementById('modo-toggle-icon');
 const glitchTransition = document.getElementById('glitch-transition');
 const modoTickAudio = new Audio('./assets/tictac.mp3');
+const modoGlitchAudio = new Audio('./assets/glitch.mp3');
+let hasPlayedFirstModoSound = false;
 modoTickAudio.preload = 'auto';
+modoGlitchAudio.preload = 'auto';
 
 function playModoTickSound() {
-  modoTickAudio.currentTime = 0;
-  modoTickAudio.play().catch(error => {
-    console.warn('Não foi possível reproduzir tictac.mp3:', error);
+  const audioToPlay = hasPlayedFirstModoSound ? modoGlitchAudio : modoTickAudio;
+  const audioName = hasPlayedFirstModoSound ? 'glitch.mp3' : 'tictac.mp3';
+
+  audioToPlay.currentTime = 0;
+  audioToPlay.play().then(() => {
+    hasPlayedFirstModoSound = true;
+  }).catch(error => {
+    console.warn(`Não foi possível reproduzir ${audioName}:`, error);
   });
 }
 
