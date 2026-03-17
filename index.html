@@ -1100,6 +1100,9 @@ let preloadModoPromise = null;
 const activeModoScripts = [];
 let unusedModoSources = [];
 let modoControlDisabled = false;
+let browserAudioUnlocked = false;
+let browserAudioUnlockAttempted = false;
+let browserAudioContext = null;
 
 const modoToggleButton = document.getElementById('modo-toggle');
 const modoToggleIcon = document.getElementById('modo-toggle-icon');
@@ -1164,6 +1167,35 @@ function runModoCountdownAnimation() {
 
   stopModoCountdownAnimation();
   modoAnimationFrame = requestAnimationFrame(tick);
+}
+
+function unlockBrowserAudio() {
+  if (browserAudioUnlocked || browserAudioUnlockAttempted) return;
+
+  browserAudioUnlockAttempted = true;
+
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (AudioContextClass) {
+      browserAudioContext = browserAudioContext || new AudioContextClass();
+      browserAudioContext.resume().catch(() => {});
+    }
+  } catch (error) {
+    console.warn('Falha ao preparar AudioContext:', error);
+  }
+
+  const unlockAudio = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAIlYAAESsAAACABAAZGF0YQAAAAA=');
+  unlockAudio.volume = 0;
+
+  unlockAudio.play()
+    .then(() => {
+      unlockAudio.pause();
+      unlockAudio.currentTime = 0;
+      browserAudioUnlocked = true;
+    })
+    .catch(() => {
+      browserAudioUnlockAttempted = false;
+    });
 }
 
 function startModoTimer(durationMs) {
@@ -1384,6 +1416,8 @@ window.addEventListener('load', () => {
 });
 
 modoToggleButton.addEventListener('click', () => {
+  unlockBrowserAudio();
+
   if (modoControlDisabled) return;
 
   if (modoAutoEnabled) {
@@ -1393,6 +1427,8 @@ modoToggleButton.addEventListener('click', () => {
 
   resumeModoTimer();
 });
+
+modoToggleButton.addEventListener('touchstart', unlockBrowserAudio, { passive: true });
 
 document.getElementById('about-section').style.display = 'none';
 </script>
