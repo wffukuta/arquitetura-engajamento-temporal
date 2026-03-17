@@ -2,7 +2,7 @@
 (function() {
     const header = document.querySelector('header');
     const heroContent = document.querySelector('.hero-content');
-    const h1 = header.querySelector('h1');
+    const h1 = header ? header.querySelector('h1') : null;
     if (!header || !heroContent || !h1) return;
 
     header.style.position = 'relative';
@@ -25,14 +25,38 @@
     let flowers = [];
     const DURATION_MS = 20000; 
     let startTime = Date.now();
-    const bloomSound = new Audio('/assets/floresnascendo.mp3');
+    const bloomSound = new Audio('../assets/floresnascendo.mp3');
     bloomSound.preload = 'auto';
+    let animationStarted = false;
+
+    function startAnimation() {
+        if (animationStarted) return;
+        animationStarted = true;
+        init();
+        playBloomSound();
+        animate();
+    }
+
+    function setupUserInteractionFallback() {
+        const unlockAndStart = () => {
+            startAnimation();
+            window.removeEventListener('pointerdown', unlockAndStart);
+            window.removeEventListener('keydown', unlockAndStart);
+            window.removeEventListener('touchstart', unlockAndStart);
+        };
+
+        window.addEventListener('pointerdown', unlockAndStart, { once: true });
+        window.addEventListener('keydown', unlockAndStart, { once: true });
+        window.addEventListener('touchstart', unlockAndStart, { once: true });
+    }
 
     function playBloomSound() {
         bloomSound.currentTime = 0;
         const playPromise = bloomSound.play();
         if (playPromise && typeof playPromise.catch === 'function') {
-            playPromise.catch(() => {});
+            playPromise.catch(() => {
+                setupUserInteractionFallback();
+            });
         }
 
         setTimeout(() => {
@@ -131,11 +155,7 @@
         init(); // Reinicia para recalcular posições no resize
     });
 
-    setTimeout(() => {
-        init();
-        playBloomSound();
-        animate();
-    }, 100);
+    setTimeout(startAnimation, 100);
 
 })();
 </script>
