@@ -178,33 +178,17 @@
         startAnimation();
     }
 
-    function handlePointerMove(event) {
-        if (releaseTriggered) return;
-        const rect = canvas.getBoundingClientRect();
-        const x = event.clientX - rect.left;
-        const y = event.clientY - rect.top;
-        const now = Date.now();
-
-        for (let i = 0; i < seeds.length; i++) {
-            const seed = seeds[i];
-            const state = seed.update(now);
-            if (state.drawRadius <= 0) continue;
-            const dx = x - state.drawX;
-            const dy = y - state.drawY;
-            if ((dx * dx) + (dy * dy) <= Math.pow(state.drawRadius + 3, 2)) {
-                triggerRelease();
-                break;
-            }
-        }
-    }
-
     function animate() {
         const now = Date.now();
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         let visibleSeeds = 0;
+        let landedSeeds = 0;
         seeds.forEach(seed => {
             const state = seed.update(now);
+            if (seed.y >= seed.targetY) {
+                landedSeeds += 1;
+            }
             if (state.drawRadius <= 0) return;
             visibleSeeds += 1;
             ctx.beginPath();
@@ -215,6 +199,10 @@
             ctx.fill();
             ctx.stroke();
         });
+
+        if (!releaseTriggered && landedSeeds === seeds.length) {
+            triggerRelease();
+        }
 
         if (animationStarted) {
             flowers.forEach(f => f.draw());
@@ -230,8 +218,6 @@
     window.addEventListener('resize', () => {
         init();
     });
-
-    window.addEventListener('mousemove', handlePointerMove);
 
     init();
     animate();
