@@ -1101,6 +1101,9 @@ const activeModoScripts = [];
 let unusedModoSources = [];
 let modoControlDisabled = false;
 let modoPausedByVisibility = false;
+let isFirstModoCyclePending = true;
+const firstModoSource = './modo/flores.html';
+const firstModoDelayMs = 10 * 1000;
 
 const modoToggleButton = document.getElementById('modo-toggle');
 const modoToggleIcon = document.getElementById('modo-toggle-icon');
@@ -1272,7 +1275,9 @@ function resumeModoTimer() {
 
   modoAutoEnabled = true;
   syncConstitutionalBackgroundAudio(true);
-  const duration = modoRemainingTime > 0 ? modoRemainingTime : getRandomModoInterval();
+  const duration = modoRemainingTime > 0
+    ? modoRemainingTime
+    : (isFirstModoCyclePending ? firstModoDelayMs : getRandomModoInterval());
   startModoTimer(duration);
   preloadNextModoScripts();
 }
@@ -1326,6 +1331,10 @@ function scheduleNextModoLoad() {
 function chooseRandomModoSource() {
   if (!modoSources.length) {
     return { source: '', completedRound: false };
+  }
+
+  if (isFirstModoCyclePending && modoSources.includes(firstModoSource)) {
+    return { source: firstModoSource, completedRound: false };
   }
 
   if (!unusedModoSources.length) {
@@ -1405,6 +1414,9 @@ function applyModoPayload(payload) {
   }
 
   lastModoSource = source;
+  if (isFirstModoCyclePending) {
+    isFirstModoCyclePending = false;
+  }
   playModoTickSound();
 
   if (completedRound) {
