@@ -1111,36 +1111,25 @@ const glitchTransition = document.getElementById('glitch-transition');
 const modoTickAudio = new Audio('./assets/tictac.mp3');
 const modoGlitchAudio = new Audio('./assets/glitch.mp3');
 const constitutionalBackgroundAudio = new Audio();
-const constitutionalBackgroundAudioBase64Path = './assets/constitutional_gba_bgm.base64';
+const constitutionalBackgroundAudioPath = './assets/Audio-fundo.opus';
 let constitutionalBackgroundReadyPromise = null;
 let constitutionalBackgroundShouldPlay = false;
 let hasPlayedFirstModoSound = false;
 modoTickAudio.preload = 'auto';
 modoGlitchAudio.preload = 'auto';
 constitutionalBackgroundAudio.loop = true;
-constitutionalBackgroundAudio.volume = 0.08;
+constitutionalBackgroundAudio.volume = 0.04;
 
 function prepareConstitutionalBackgroundAudio() {
-  if (constitutionalBackgroundAudio.src?.startsWith('data:audio/wav;base64,')) {
+  if (constitutionalBackgroundAudio.src?.includes('Audio-fundo.opus')) {
     return Promise.resolve();
   }
 
   if (!constitutionalBackgroundReadyPromise) {
-    constitutionalBackgroundReadyPromise = fetch(constitutionalBackgroundAudioBase64Path, { cache: 'force-cache' })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`Falha ao carregar base64 da trilha (${response.status})`);
-        }
-        return response.text();
-      })
-      .then(base64Audio => {
-        constitutionalBackgroundAudio.src = `data:audio/wav;base64,${base64Audio.trim()}`;
-        constitutionalBackgroundAudio.load();
-      })
-      .catch(error => {
-        constitutionalBackgroundReadyPromise = null;
-        throw error;
-      });
+    constitutionalBackgroundReadyPromise = Promise.resolve().then(() => {
+      constitutionalBackgroundAudio.src = constitutionalBackgroundAudioPath;
+      constitutionalBackgroundAudio.load();
+    });
   }
 
   return constitutionalBackgroundReadyPromise;
@@ -1158,7 +1147,7 @@ function syncConstitutionalBackgroundAudio(shouldPlay) {
         });
       })
       .catch(error => {
-        console.warn('Não foi possível carregar a trilha de fundo em base64:', error);
+        console.warn('Não foi possível carregar a trilha de fundo:', error);
       });
     return;
   }
