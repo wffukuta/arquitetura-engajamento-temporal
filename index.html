@@ -1107,9 +1107,62 @@ const modoToggleIcon = document.getElementById('modo-toggle-icon');
 const glitchTransition = document.getElementById('glitch-transition');
 const modoTickAudio = new Audio('./assets/tictac.mp3');
 const modoGlitchAudio = new Audio('./assets/glitch.mp3');
+const constitutionalBackgroundAudio = new Audio();
+const constitutionalBackgroundAudioBase64Path = './assets/constitutional_gba_bgm.base64';
+let constitutionalBackgroundReadyPromise = null;
+let constitutionalBackgroundShouldPlay = false;
 let hasPlayedFirstModoSound = false;
 modoTickAudio.preload = 'auto';
 modoGlitchAudio.preload = 'auto';
+constitutionalBackgroundAudio.loop = true;
+constitutionalBackgroundAudio.volume = 0.08;
+
+function prepareConstitutionalBackgroundAudio() {
+  if (constitutionalBackgroundAudio.src?.startsWith('data:audio/wav;base64,')) {
+    return Promise.resolve();
+  }
+
+  if (!constitutionalBackgroundReadyPromise) {
+    constitutionalBackgroundReadyPromise = fetch(constitutionalBackgroundAudioBase64Path, { cache: 'force-cache' })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Falha ao carregar base64 da trilha (${response.status})`);
+        }
+        return response.text();
+      })
+      .then(base64Audio => {
+        constitutionalBackgroundAudio.src = `data:audio/wav;base64,${base64Audio.trim()}`;
+        constitutionalBackgroundAudio.load();
+      })
+      .catch(error => {
+        constitutionalBackgroundReadyPromise = null;
+        throw error;
+      });
+  }
+
+  return constitutionalBackgroundReadyPromise;
+}
+
+function syncConstitutionalBackgroundAudio(shouldPlay) {
+  constitutionalBackgroundShouldPlay = shouldPlay;
+
+  if (shouldPlay) {
+    prepareConstitutionalBackgroundAudio()
+      .then(() => {
+        if (!constitutionalBackgroundShouldPlay) return;
+        constitutionalBackgroundAudio.play().catch(error => {
+          console.warn('Não foi possível iniciar a trilha de fundo:', error);
+        });
+      })
+      .catch(error => {
+        console.warn('Não foi possível carregar a trilha de fundo em base64:', error);
+      });
+    return;
+  }
+
+  constitutionalBackgroundAudio.pause();
+  constitutionalBackgroundAudio.currentTime = 0;
+}
 
 function playModoTickSound() {
   const audioToPlay = hasPlayedFirstModoSound ? modoGlitchAudio : modoTickAudio;
@@ -1152,6 +1205,7 @@ function disableModoAutoControl() {
   modoControlDisabled = true;
   modoAutoEnabled = false;
   clearModoTimer();
+  syncConstitutionalBackgroundAudio(false);
   preloadedModoPayload = null;
   preloadModoPromise = null;
   modoRemainingTime = 0;
@@ -1207,6 +1261,7 @@ function pauseModoTimer() {
   modoRemainingTime = Math.max(0, modoExpectedEnd - performance.now());
   modoAutoEnabled = false;
   clearModoTimer();
+  syncConstitutionalBackgroundAudio(false);
 
   const progress = modoTimerDuration ? (modoTimerDuration - modoRemainingTime) / modoTimerDuration : 0;
   setModoToggleVisual(progress, '▶');
@@ -1216,6 +1271,7 @@ function resumeModoTimer() {
   if (modoControlDisabled) return;
 
   modoAutoEnabled = true;
+  syncConstitutionalBackgroundAudio(true);
   const duration = modoRemainingTime > 0 ? modoRemainingTime : getRandomModoInterval();
   startModoTimer(duration);
   preloadNextModoScripts();
