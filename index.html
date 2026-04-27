@@ -733,8 +733,10 @@
       position: absolute;
       inset: 0;
       background: #000;
-      clip-path: inset(50% 50% 50% 50%);
-      will-change: clip-path;
+      --freeze-hole-radius: 150vmax;
+      -webkit-mask-image: radial-gradient(circle at 50% 50%, transparent var(--freeze-hole-radius), #000 calc(var(--freeze-hole-radius) + 1px));
+      mask-image: radial-gradient(circle at 50% 50%, transparent var(--freeze-hole-radius), #000 calc(var(--freeze-hole-radius) + 1px));
+      will-change: -webkit-mask-image, mask-image;
     }
 
     .time-freeze-overlay__layer.layer-1 { background: rgba(0, 0, 0, 0.35); }
@@ -750,13 +752,13 @@
     .time-freeze-overlay.exiting .layer-3 { animation: freezeEdgesOut 0.78s ease-in forwards; }
 
     @keyframes freezeEdgesIn {
-      0% { clip-path: inset(50% 50% 50% 50%); }
-      100% { clip-path: inset(0 0 0 0); }
+      0% { --freeze-hole-radius: 150vmax; }
+      100% { --freeze-hole-radius: 0vmax; }
     }
 
     @keyframes freezeEdgesOut {
-      0% { clip-path: inset(0 0 0 0); }
-      100% { clip-path: inset(50% 50% 50% 50%); }
+      0% { --freeze-hole-radius: 0vmax; }
+      100% { --freeze-hole-radius: 150vmax; }
     }
 
     .time-freeze-overlay__phrase {
