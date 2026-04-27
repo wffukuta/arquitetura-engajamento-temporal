@@ -730,6 +730,54 @@
       animation: promptFadeIn 0.5s ease forwards;
     }
 
+    .modo-pause-blackout {
+      position: fixed;
+      inset: 0;
+      z-index: 9990;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+      background: #000000;
+      color: #f5f5f5;
+      opacity: 0;
+      transition: opacity 0.45s ease;
+      pointer-events: none;
+    }
+
+    .modo-pause-blackout.visible {
+      display: flex;
+      opacity: 1;
+    }
+
+    .modo-pause-blackout p {
+      margin: 0;
+      max-width: 540px;
+      font-size: clamp(16px, 2.1vw, 24px);
+      line-height: 1.45;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    .modo-toggle.in-blackout {
+      animation: blackoutPlayPulse 1.8s ease-in-out infinite;
+      box-shadow: 0 0 0 1px #ffffff inset, 0 0 14px rgba(255, 255, 255, 0.22);
+      border-color: #ffffff;
+      background: #000000;
+    }
+
+    .modo-toggle.in-blackout .modo-toggle__icon {
+      border-color: #ffffff;
+      background: #000000;
+      color: #ffffff;
+    }
+
+    @keyframes blackoutPlayPulse {
+      0%, 100% { transform: translateY(0) translateZ(0); filter: brightness(1); }
+      50% { transform: translateY(-2px) translateZ(0); filter: brightness(1.22); }
+    }
+
     @keyframes promptFadeIn {
       from { opacity: 0; }
       to { opacity: 1; }
@@ -868,6 +916,10 @@
   </span>
   <span class="modo-toggle__icon" id="modo-toggle-icon" aria-hidden="true">▶</span>
 </button>
+
+<section class="modo-pause-blackout" id="modo-pause-blackout" aria-hidden="true">
+  <p>PAUSA ESTRATÉGICA. TOQUE EM ▶ PARA RETOMAR O FLUXO.</p>
+</section>
 
 <section class="chat-widget" id="chat-widget" aria-label="Chat de contato">
   <button class="chat-toggle" id="chat-toggle" type="button" aria-expanded="false" aria-controls="chat-panel">💬</button>
@@ -1118,12 +1170,14 @@ let constitutionalBackgroundShouldPlay = false;
 let constitutionalBackgroundHasFadedIn = false;
 let constitutionalBackgroundFadeIntervalId = null;
 let hasPlayedFirstModoSound = false;
+let modoPauseBlackoutActive = false;
 const modoTickFadeOutDurationSeconds = 1.5;
 const modoTickBaseVolume = modoTickAudio.volume;
 modoTickAudio.preload = 'auto';
 modoGlitchAudio.preload = 'auto';
 constitutionalBackgroundAudio.loop = true;
 constitutionalBackgroundAudio.volume = 0.04;
+const modoPauseBlackout = document.getElementById('modo-pause-blackout');
 
 function prepareConstitutionalBackgroundAudio() {
   if (constitutionalBackgroundAudio.src?.includes('Audio-fundo.opus')) {
@@ -1242,6 +1296,7 @@ function clearModoTimer() {
 function disableModoAutoControl() {
   modoControlDisabled = true;
   modoAutoEnabled = false;
+  deactivatePauseBlackout();
   clearModoTimer();
   preloadedModoPayload = null;
   preloadModoPromise = null;
@@ -1303,9 +1358,26 @@ function pauseModoTimer() {
   setModoToggleVisual(progress, '▶');
 }
 
+function activatePauseBlackout() {
+  if (!modoPauseBlackout || modoPauseBlackoutActive) return;
+  modoPauseBlackoutActive = true;
+  modoPauseBlackout.classList.add('visible');
+  modoPauseBlackout.setAttribute('aria-hidden', 'false');
+  modoToggleButton.classList.add('in-blackout');
+}
+
+function deactivatePauseBlackout() {
+  if (!modoPauseBlackout || !modoPauseBlackoutActive) return;
+  modoPauseBlackoutActive = false;
+  modoPauseBlackout.classList.remove('visible');
+  modoPauseBlackout.setAttribute('aria-hidden', 'true');
+  modoToggleButton.classList.remove('in-blackout');
+}
+
 function resumeModoTimer() {
   if (modoControlDisabled) return;
 
+  deactivatePauseBlackout();
   modoAutoEnabled = true;
   syncConstitutionalBackgroundAudio(true);
   const duration = modoRemainingTime > 0
@@ -1529,6 +1601,11 @@ modoToggleButton.addEventListener('click', () => {
 
   if (modoAutoEnabled) {
     pauseModoTimer();
+    return;
+  }
+
+  if (!modoPauseBlackoutActive) {
+    activatePauseBlackout();
     return;
   }
 
