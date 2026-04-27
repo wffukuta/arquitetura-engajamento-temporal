@@ -733,8 +733,9 @@
       position: absolute;
       inset: 0;
       background: #000;
-      clip-path: inset(50% 50% 50% 50%);
-      will-change: clip-path;
+      -webkit-mask-image: radial-gradient(circle at center, transparent 72vmax, #000 73vmax);
+      mask-image: radial-gradient(circle at center, transparent 72vmax, #000 73vmax);
+      will-change: -webkit-mask-image, mask-image;
     }
 
     .time-freeze-overlay__layer.layer-1 { background: rgba(0, 0, 0, 0.35); }
@@ -750,13 +751,25 @@
     .time-freeze-overlay.exiting .layer-3 { animation: freezeEdgesOut 0.78s ease-in forwards; }
 
     @keyframes freezeEdgesIn {
-      0% { clip-path: inset(50% 50% 50% 50%); }
-      100% { clip-path: inset(0 0 0 0); }
+      0% {
+        -webkit-mask-image: radial-gradient(circle at center, transparent 72vmax, #000 73vmax);
+        mask-image: radial-gradient(circle at center, transparent 72vmax, #000 73vmax);
+      }
+      100% {
+        -webkit-mask-image: radial-gradient(circle at center, transparent 0vmax, #000 1vmax);
+        mask-image: radial-gradient(circle at center, transparent 0vmax, #000 1vmax);
+      }
     }
 
     @keyframes freezeEdgesOut {
-      0% { clip-path: inset(0 0 0 0); }
-      100% { clip-path: inset(50% 50% 50% 50%); }
+      0% {
+        -webkit-mask-image: radial-gradient(circle at center, transparent 0vmax, #000 1vmax);
+        mask-image: radial-gradient(circle at center, transparent 0vmax, #000 1vmax);
+      }
+      100% {
+        -webkit-mask-image: radial-gradient(circle at center, transparent 72vmax, #000 73vmax);
+        mask-image: radial-gradient(circle at center, transparent 72vmax, #000 73vmax);
+      }
     }
 
     .time-freeze-overlay__phrase {
