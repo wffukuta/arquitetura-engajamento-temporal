@@ -731,17 +731,21 @@
 
     .time-freeze-overlay__layer {
       position: absolute;
-      inset: 0;
-      background: #000;
-      --freeze-hole-radius: 150vmax;
-      -webkit-mask-image: radial-gradient(circle at 50% 50%, transparent var(--freeze-hole-radius), #000 calc(var(--freeze-hole-radius) + 1px));
-      mask-image: radial-gradient(circle at 50% 50%, transparent var(--freeze-hole-radius), #000 calc(var(--freeze-hole-radius) + 1px));
-      will-change: -webkit-mask-image, mask-image;
+      top: 50%;
+      left: 50%;
+      width: 320vmax;
+      height: 320vmax;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: transparent;
+      box-shadow: 0 0 0 220vmax currentColor;
+      opacity: 0;
+      will-change: width, height, opacity;
     }
 
-    .time-freeze-overlay__layer.layer-1 { background: rgba(0, 0, 0, 0.35); }
-    .time-freeze-overlay__layer.layer-2 { background: rgba(0, 0, 0, 0.72); }
-    .time-freeze-overlay__layer.layer-3 { background: #000000; }
+    .time-freeze-overlay__layer.layer-1 { color: rgba(0, 0, 0, 0.35); }
+    .time-freeze-overlay__layer.layer-2 { color: rgba(0, 0, 0, 0.72); }
+    .time-freeze-overlay__layer.layer-3 { color: #000000; }
 
     .time-freeze-overlay.active .layer-1 { animation: freezeEdgesIn 0.55s ease-out forwards; }
     .time-freeze-overlay.active .layer-2 { animation: freezeEdgesIn 0.72s ease-out 0.08s forwards; }
@@ -752,13 +756,32 @@
     .time-freeze-overlay.exiting .layer-3 { animation: freezeEdgesOut 0.78s ease-in forwards; }
 
     @keyframes freezeEdgesIn {
-      0% { --freeze-hole-radius: 150vmax; }
-      100% { --freeze-hole-radius: 0vmax; }
+      0% {
+        width: 320vmax;
+        height: 320vmax;
+        opacity: 0;
+      }
+      10% {
+        opacity: 1;
+      }
+      100% {
+        width: 0;
+        height: 0;
+        opacity: 1;
+      }
     }
 
     @keyframes freezeEdgesOut {
-      0% { --freeze-hole-radius: 0vmax; }
-      100% { --freeze-hole-radius: 150vmax; }
+      0% {
+        width: 0;
+        height: 0;
+        opacity: 1;
+      }
+      100% {
+        width: 320vmax;
+        height: 320vmax;
+        opacity: 0;
+      }
     }
 
     .time-freeze-overlay__phrase {
