@@ -543,7 +543,7 @@
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      z-index: 9998;
+      z-index: 10001;
       transition: filter 0.2s, transform 0.2s, bottom 0.3s ease;
       padding: 0;
       animation: floatWidget 3s ease-in-out infinite;
@@ -714,6 +714,92 @@
       }
     }
 
+    .time-freeze-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+      overflow: hidden;
+    }
+
+    .time-freeze-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .time-freeze-overlay__layer {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .time-freeze-overlay__layer.layer-1 { background: rgba(0, 0, 0, 0.35); }
+    .time-freeze-overlay__layer.layer-2 { background: rgba(0, 0, 0, 0.72); }
+    .time-freeze-overlay__layer.layer-3 { background: #000000; }
+
+    .time-freeze-overlay.active .layer-1 { animation: freezeCircleIn 0.55s ease-out forwards; }
+    .time-freeze-overlay.active .layer-2 { animation: freezeCircleIn 0.72s ease-out 0.08s forwards; }
+    .time-freeze-overlay.active .layer-3 { animation: freezeCircleIn 0.9s ease-out 0.16s forwards; }
+
+    .time-freeze-overlay.exiting .layer-1 { animation: freezeCircleOut 0.55s ease-in 0.12s forwards; }
+    .time-freeze-overlay.exiting .layer-2 { animation: freezeCircleOut 0.66s ease-in 0.06s forwards; }
+    .time-freeze-overlay.exiting .layer-3 { animation: freezeCircleOut 0.78s ease-in forwards; }
+
+    @keyframes freezeCircleIn {
+      0% { width: 0; height: 0; }
+      100% { width: 180vmax; height: 180vmax; }
+    }
+
+    @keyframes freezeCircleOut {
+      0% { width: 180vmax; height: 180vmax; }
+      100% { width: 0; height: 0; }
+    }
+
+    .time-freeze-overlay__phrase {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 32px;
+      color: #ffffff;
+      text-align: center;
+      font-size: clamp(22px, 2.8vw, 38px);
+      font-weight: 600;
+      line-height: 1.35;
+      letter-spacing: 0.02em;
+      opacity: 0;
+      transition: opacity 0.28s ease;
+    }
+
+    .time-freeze-overlay.active .time-freeze-overlay__phrase {
+      opacity: 1;
+      transition-delay: 0.75s;
+    }
+
+    .time-freeze-overlay.exiting .time-freeze-overlay__phrase {
+      opacity: 0;
+      transition-delay: 0s;
+    }
+
+    .time-freeze-letter {
+      display: inline-block;
+      animation: shakeLetter 1.6s ease-in-out infinite;
+      will-change: transform;
+    }
+
+    @keyframes shakeLetter {
+      0%, 100% { transform: translate(0, 0); }
+      25% { transform: translate(2px, -2px); }
+      50% { transform: translate(-2px, 2px); }
+      75% { transform: translate(3px, -1px); }
+    }
+
     .project-prompt-overlay {
       position: fixed;
       inset: 0;
@@ -868,6 +954,13 @@
   </span>
   <span class="modo-toggle__icon" id="modo-toggle-icon" aria-hidden="true">▶</span>
 </button>
+
+<section class="time-freeze-overlay" id="time-freeze-overlay" aria-hidden="true">
+  <div class="time-freeze-overlay__layer layer-1" aria-hidden="true"></div>
+  <div class="time-freeze-overlay__layer layer-2" aria-hidden="true"></div>
+  <div class="time-freeze-overlay__layer layer-3" aria-hidden="true"></div>
+  <p class="time-freeze-overlay__phrase" id="time-freeze-phrase">Grandes projetos podem surgir nos lugares mais improváveis. O seu pode começar aqui, comigo.</p>
+</section>
 
 <section class="chat-widget" id="chat-widget" aria-label="Chat de contato">
   <button class="chat-toggle" id="chat-toggle" type="button" aria-expanded="false" aria-controls="chat-panel">💬</button>
@@ -1109,6 +1202,8 @@ const firstModoDelayMs = 10 * 1000;
 const modoToggleButton = document.getElementById('modo-toggle');
 const modoToggleIcon = document.getElementById('modo-toggle-icon');
 const glitchTransition = document.getElementById('glitch-transition');
+const timeFreezeOverlay = document.getElementById('time-freeze-overlay');
+const timeFreezePhrase = document.getElementById('time-freeze-phrase');
 const modoTickAudio = new Audio('./assets/tictac.mp3');
 const modoGlitchAudio = new Audio('./assets/glitch.mp3');
 const constitutionalBackgroundAudio = new Audio();
@@ -1118,6 +1213,7 @@ let constitutionalBackgroundShouldPlay = false;
 let constitutionalBackgroundHasFadedIn = false;
 let constitutionalBackgroundFadeIntervalId = null;
 let hasPlayedFirstModoSound = false;
+let isTimeFreezeTransitioning = false;
 const modoTickFadeOutDurationSeconds = 1.5;
 const modoTickBaseVolume = modoTickAudio.volume;
 modoTickAudio.preload = 'auto';
@@ -1223,6 +1319,57 @@ function setModoToggleVisual(progress, icon) {
   const normalizedProgress = Math.min(Math.max(progress, 0), 1);
   modoToggleButton.style.setProperty('--timer-progress', `${normalizedProgress * 360}deg`);
   modoToggleIcon.textContent = icon;
+}
+
+function buildTimeFreezePhraseLetters() {
+  if (!timeFreezePhrase) return;
+
+  const phrase = timeFreezePhrase.textContent || '';
+  const fragment = document.createDocumentFragment();
+
+  [...phrase].forEach((character, index) => {
+    if (character === ' ') {
+      fragment.appendChild(document.createTextNode(' '));
+      return;
+    }
+
+    const letter = document.createElement('span');
+    letter.className = 'time-freeze-letter';
+    letter.textContent = character;
+    letter.style.animationDelay = `${(index % 14) * 0.08}s`;
+    fragment.appendChild(letter);
+  });
+
+  timeFreezePhrase.textContent = '';
+  timeFreezePhrase.appendChild(fragment);
+}
+
+function wait(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function showTimeFreezeOverlay() {
+  if (!timeFreezeOverlay || isTimeFreezeTransitioning) return;
+  isTimeFreezeTransitioning = true;
+
+  timeFreezeOverlay.classList.remove('exiting');
+  timeFreezeOverlay.classList.add('active');
+  timeFreezeOverlay.setAttribute('aria-hidden', 'false');
+
+  await wait(980);
+  isTimeFreezeTransitioning = false;
+}
+
+async function hideTimeFreezeOverlay() {
+  if (!timeFreezeOverlay || isTimeFreezeTransitioning) return;
+  isTimeFreezeTransitioning = true;
+
+  timeFreezeOverlay.classList.add('exiting');
+  await wait(860);
+  timeFreezeOverlay.classList.remove('active', 'exiting');
+  timeFreezeOverlay.setAttribute('aria-hidden', 'true');
+
+  isTimeFreezeTransitioning = false;
 }
 
 function stopModoCountdownAnimation() {
@@ -1520,18 +1667,22 @@ async function runModoCycle() {
 
 window.addEventListener('load', () => {
   setModoToggleVisual(0, '▶');
+  buildTimeFreezePhraseLetters();
 });
 
-modoToggleButton.addEventListener('click', () => {
+modoToggleButton.addEventListener('click', async () => {
   if (modoControlDisabled) return;
+  if (isTimeFreezeTransitioning) return;
 
   modoPausedByVisibility = false;
 
   if (modoAutoEnabled) {
     pauseModoTimer();
+    await showTimeFreezeOverlay();
     return;
   }
 
+  await hideTimeFreezeOverlay();
   playModoTickSound();
   resumeModoTimer();
 });
