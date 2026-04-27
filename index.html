@@ -1118,6 +1118,8 @@ let constitutionalBackgroundShouldPlay = false;
 let constitutionalBackgroundHasFadedIn = false;
 let constitutionalBackgroundFadeIntervalId = null;
 let hasPlayedFirstModoSound = false;
+const modoTickFadeOutDurationSeconds = 1.5;
+const modoTickBaseVolume = modoTickAudio.volume;
 modoTickAudio.preload = 'auto';
 modoGlitchAudio.preload = 'auto';
 constitutionalBackgroundAudio.loop = true;
@@ -1185,6 +1187,24 @@ function syncConstitutionalBackgroundAudio(shouldPlay) {
 function playModoTickSound() {
   const audioToPlay = hasPlayedFirstModoSound ? modoGlitchAudio : modoTickAudio;
   const audioName = hasPlayedFirstModoSound ? 'glitch.mp3' : 'tictac.mp3';
+
+  if (audioToPlay === modoTickAudio) {
+    modoTickAudio.volume = modoTickBaseVolume;
+    modoTickAudio.ontimeupdate = () => {
+      if (!Number.isFinite(modoTickAudio.duration) || modoTickAudio.duration <= 0) return;
+
+      const remainingTime = modoTickAudio.duration - modoTickAudio.currentTime;
+      if (remainingTime > modoTickFadeOutDurationSeconds) return;
+
+      const progress = Math.max(0, Math.min(1, remainingTime / modoTickFadeOutDurationSeconds));
+      modoTickAudio.volume = modoTickBaseVolume * progress;
+    };
+    modoTickAudio.onended = () => {
+      modoTickAudio.volume = modoTickBaseVolume;
+      modoTickAudio.ontimeupdate = null;
+      modoTickAudio.onended = null;
+    };
+  }
 
   audioToPlay.currentTime = 0;
   audioToPlay.play().then(() => {
@@ -1432,7 +1452,6 @@ function applyModoPayload(payload) {
   if (isFirstModoCyclePending) {
     isFirstModoCyclePending = false;
   }
-  playModoTickSound();
 
   if (completedRound) {
     window.dispatchEvent(new CustomEvent('modo:all-sources-completed'));
@@ -1483,6 +1502,7 @@ async function runModoCycle() {
       return;
     }
 
+    playModoTickSound();
     await runModoGlitchTransition();
 
     if (modoControlDisabled) {
