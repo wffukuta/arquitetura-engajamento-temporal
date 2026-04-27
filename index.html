@@ -1103,6 +1103,7 @@ let modoControlDisabled = false;
 let modoPausedByVisibility = false;
 let isFirstModoCyclePending = true;
 const firstModoSource = './modo/flores.html';
+const recurringModoSources = modoSources.filter(source => source !== firstModoSource);
 const firstModoDelayMs = 10 * 1000;
 
 const modoToggleButton = document.getElementById('modo-toggle');
@@ -1349,8 +1350,10 @@ function chooseRandomModoSource() {
     return { source: firstModoSource, completedRound: false };
   }
 
+  const sourcesPool = recurringModoSources.length ? recurringModoSources : modoSources;
+
   if (!unusedModoSources.length) {
-    unusedModoSources = [...modoSources].sort(() => Math.random() - 0.5);
+    unusedModoSources = [...sourcesPool].sort(() => Math.random() - 0.5);
 
     if (unusedModoSources.length > 1 && unusedModoSources[0] === lastModoSource) {
       const moved = unusedModoSources.shift();
