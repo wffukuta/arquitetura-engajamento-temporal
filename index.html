@@ -1114,6 +1114,8 @@ const constitutionalBackgroundAudio = new Audio();
 const constitutionalBackgroundAudioPath = './assets/Audio-fundo.opus';
 let constitutionalBackgroundReadyPromise = null;
 let constitutionalBackgroundShouldPlay = false;
+let constitutionalBackgroundHasFadedIn = false;
+let constitutionalBackgroundFadeIntervalId = null;
 let hasPlayedFirstModoSound = false;
 modoTickAudio.preload = 'auto';
 modoGlitchAudio.preload = 'auto';
@@ -1142,6 +1144,33 @@ function syncConstitutionalBackgroundAudio(shouldPlay) {
     prepareConstitutionalBackgroundAudio()
       .then(() => {
         if (!constitutionalBackgroundShouldPlay) return;
+        if (!constitutionalBackgroundHasFadedIn) {
+          const targetVolume = constitutionalBackgroundAudio.volume;
+          const fadeDurationMs = 5000;
+          const stepMs = 50;
+          const totalSteps = Math.max(1, Math.floor(fadeDurationMs / stepMs));
+          const volumeIncrement = targetVolume / totalSteps;
+
+          constitutionalBackgroundAudio.volume = 0;
+          constitutionalBackgroundHasFadedIn = true;
+
+          if (constitutionalBackgroundFadeIntervalId) {
+            clearInterval(constitutionalBackgroundFadeIntervalId);
+          }
+
+          constitutionalBackgroundFadeIntervalId = setInterval(() => {
+            constitutionalBackgroundAudio.volume = Math.min(
+              targetVolume,
+              constitutionalBackgroundAudio.volume + volumeIncrement
+            );
+
+            if (constitutionalBackgroundAudio.volume >= targetVolume) {
+              clearInterval(constitutionalBackgroundFadeIntervalId);
+              constitutionalBackgroundFadeIntervalId = null;
+            }
+          }, stepMs);
+        }
+
         constitutionalBackgroundAudio.play().catch(error => {
           console.warn('Não foi possível iniciar a trilha de fundo:', error);
         });
@@ -1149,11 +1178,7 @@ function syncConstitutionalBackgroundAudio(shouldPlay) {
       .catch(error => {
         console.warn('Não foi possível carregar a trilha de fundo:', error);
       });
-    return;
   }
-
-  constitutionalBackgroundAudio.pause();
-  constitutionalBackgroundAudio.currentTime = 0;
 }
 
 function playModoTickSound() {
@@ -1197,7 +1222,6 @@ function disableModoAutoControl() {
   modoControlDisabled = true;
   modoAutoEnabled = false;
   clearModoTimer();
-  syncConstitutionalBackgroundAudio(false);
   preloadedModoPayload = null;
   preloadModoPromise = null;
   modoRemainingTime = 0;
@@ -1253,7 +1277,6 @@ function pauseModoTimer() {
   modoRemainingTime = Math.max(0, modoExpectedEnd - performance.now());
   modoAutoEnabled = false;
   clearModoTimer();
-  syncConstitutionalBackgroundAudio(false);
 
   const progress = modoTimerDuration ? (modoTimerDuration - modoRemainingTime) / modoTimerDuration : 0;
   setModoToggleVisual(progress, '▶');
