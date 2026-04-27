@@ -733,9 +733,21 @@
       position: absolute;
       inset: 0;
       --freeze-hole: 150vmax;
+      --freeze-origin-x: 50%;
+      --freeze-origin-y: 50%;
       background: #000;
-      -webkit-mask-image: radial-gradient(circle at center, transparent 0, transparent var(--freeze-hole), #000 calc(var(--freeze-hole) + 1px));
-      mask-image: radial-gradient(circle at center, transparent 0, transparent var(--freeze-hole), #000 calc(var(--freeze-hole) + 1px));
+      -webkit-mask-image: radial-gradient(
+        circle at var(--freeze-origin-x) var(--freeze-origin-y),
+        transparent 0,
+        transparent var(--freeze-hole),
+        #000 calc(var(--freeze-hole) + 1px)
+      );
+      mask-image: radial-gradient(
+        circle at var(--freeze-origin-x) var(--freeze-origin-y),
+        transparent 0,
+        transparent var(--freeze-hole),
+        #000 calc(var(--freeze-hole) + 1px)
+      );
       will-change: mask-image;
     }
 
@@ -1357,10 +1369,37 @@ function wait(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+function setTimeFreezeOriginOutsideScreen() {
+  if (!timeFreezeOverlay) return;
+
+  const outsideOffset = 24;
+  const side = Math.floor(Math.random() * 4);
+  let x = '50%';
+  let y = '50%';
+
+  if (side === 0) {
+    x = `${Math.floor(Math.random() * 100)}%`;
+    y = `-${outsideOffset}%`;
+  } else if (side === 1) {
+    x = `${100 + outsideOffset}%`;
+    y = `${Math.floor(Math.random() * 100)}%`;
+  } else if (side === 2) {
+    x = `${Math.floor(Math.random() * 100)}%`;
+    y = `${100 + outsideOffset}%`;
+  } else {
+    x = `-${outsideOffset}%`;
+    y = `${Math.floor(Math.random() * 100)}%`;
+  }
+
+  timeFreezeOverlay.style.setProperty('--freeze-origin-x', x);
+  timeFreezeOverlay.style.setProperty('--freeze-origin-y', y);
+}
+
 async function showTimeFreezeOverlay() {
   if (!timeFreezeOverlay || isTimeFreezeTransitioning) return;
   isTimeFreezeTransitioning = true;
 
+  setTimeFreezeOriginOutsideScreen();
   timeFreezeOverlay.classList.remove('exiting');
   timeFreezeOverlay.classList.add('active');
   timeFreezeOverlay.setAttribute('aria-hidden', 'false');
