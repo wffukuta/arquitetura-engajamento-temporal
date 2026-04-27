@@ -731,12 +731,12 @@
 
     .time-freeze-overlay__layer {
       position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 0;
-      height: 0;
-      border-radius: 50%;
-      transform: translate(-50%, -50%);
+      inset: 0;
+      --freeze-hole: 150vmax;
+      background: #000;
+      -webkit-mask-image: radial-gradient(circle at center, transparent 0, transparent var(--freeze-hole), #000 calc(var(--freeze-hole) + 1px));
+      mask-image: radial-gradient(circle at center, transparent 0, transparent var(--freeze-hole), #000 calc(var(--freeze-hole) + 1px));
+      will-change: mask-image;
     }
 
     .time-freeze-overlay__layer.layer-1 { background: rgba(0, 0, 0, 0.35); }
@@ -752,20 +752,23 @@
     .time-freeze-overlay.exiting .layer-3 { animation: freezeCircleOut 0.78s ease-in forwards; }
 
     @keyframes freezeCircleIn {
-      0% { width: 0; height: 0; }
-      100% { width: 180vmax; height: 180vmax; }
+      0% { --freeze-hole: 150vmax; }
+      100% { --freeze-hole: 0vmax; }
     }
 
     @keyframes freezeCircleOut {
-      0% { width: 180vmax; height: 180vmax; }
-      100% { width: 0; height: 0; }
+      0% { --freeze-hole: 0vmax; }
+      100% { --freeze-hole: 150vmax; }
     }
 
     .time-freeze-overlay__phrase {
       position: absolute;
       inset: 0;
-      display: grid;
-      place-items: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 0.02em;
       padding: 32px;
       color: #ffffff;
       text-align: center;
@@ -788,9 +791,13 @@
     }
 
     .time-freeze-letter {
-      display: inline-block;
+      display: inline-flex;
       animation: shakeLetter 1.6s ease-in-out infinite;
       will-change: transform;
+    }
+
+    .time-freeze-letter--space {
+      min-width: 0.45em;
     }
 
     @keyframes shakeLetter {
@@ -1328,14 +1335,16 @@ function buildTimeFreezePhraseLetters() {
   const fragment = document.createDocumentFragment();
 
   [...phrase].forEach((character, index) => {
-    if (character === ' ') {
-      fragment.appendChild(document.createTextNode(' '));
-      return;
-    }
-
     const letter = document.createElement('span');
     letter.className = 'time-freeze-letter';
-    letter.textContent = character;
+
+    if (character === ' ') {
+      letter.innerHTML = '&nbsp;';
+      letter.classList.add('time-freeze-letter--space');
+    } else {
+      letter.textContent = character;
+    }
+
     letter.style.animationDelay = `${(index % 14) * 0.08}s`;
     fragment.appendChild(letter);
   });
