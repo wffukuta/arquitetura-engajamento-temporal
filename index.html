@@ -987,6 +987,10 @@
       opacity: 1;
     }
 
+    .site-entry.visible .site-entry__media {
+      animation: siteEntryMediaArrive 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
     .site-entry__media {
       position: absolute;
       left: 50%;
@@ -998,7 +1002,9 @@
       min-height: 0;
       margin: 0;
       pointer-events: none;
-      transform: translateX(-50%);
+      opacity: 0;
+      transform: translateX(-50%) translateY(46px) scale(0.88) rotate(-7deg);
+      transform-origin: 50% 100%;
     }
 
     .site-entry__image {
@@ -1007,6 +1013,7 @@
       object-fit: contain;
       filter: drop-shadow(10px 16px 0 rgba(0, 0, 0, 0.24));
       animation: siteEntryFloat 2.8s ease-in-out infinite;
+      animation-delay: 0.86s;
     }
 
     .site-entry__crumb {
@@ -1038,6 +1045,21 @@
       text-align: left;
     }
 
+    .site-entry__dialogue {
+      min-height: 1.45em;
+    }
+
+    .site-entry__dialogue.is-typing::after {
+      content: '';
+      display: inline-block;
+      width: 0.62em;
+      height: 1em;
+      margin-left: 3px;
+      border-right: 2px solid #000000;
+      vertical-align: -0.12em;
+      animation: siteEntryCursorBlink 0.72s steps(2, start) infinite;
+    }
+
     .site-entry__notice {
       min-height: 20px;
       color: #7a1f1f;
@@ -1050,6 +1072,16 @@
       justify-content: flex-end;
       gap: 10px;
       margin-top: 8px;
+      opacity: 0;
+      transform: translateY(10px);
+      pointer-events: none;
+      transition: opacity 0.28s ease, transform 0.28s ease;
+    }
+
+    .site-entry__actions.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
     }
 
     .site-entry__actions button {
@@ -1088,9 +1120,29 @@
       animation: siteEntryRefuseShake 0.42s ease;
     }
 
+    @keyframes siteEntryMediaArrive {
+      0% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(70px) scale(0.78) rotate(-10deg);
+      }
+      68% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(-8px) scale(1.03) rotate(2deg);
+      }
+      100% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0) scale(1) rotate(0deg);
+      }
+    }
+
     @keyframes siteEntryFloat {
       0%, 100% { transform: translateY(0) rotate(-2deg); }
       50% { transform: translateY(-10px) rotate(2deg); }
+    }
+
+    @keyframes siteEntryCursorBlink {
+      0%, 45% { opacity: 1; }
+      46%, 100% { opacity: 0; }
     }
 
     @keyframes siteEntryCrumb {
@@ -1112,8 +1164,10 @@
     @media (prefers-reduced-motion: reduce) {
       .site-entry,
       .site-entry__card,
+      .site-entry__media,
       .site-entry__image,
-      .site-entry__crumb {
+      .site-entry__crumb,
+      .site-entry__dialogue.is-typing::after {
         animation-duration: 0.01ms !important;
         transition-duration: 0.01ms !important;
       }
@@ -1227,9 +1281,9 @@
       <span class="site-entry__crumb"></span>
     </div>
     <h2 id="site-entry-title">Guardião</h2>
-    <p id="site-entry-description">Ei, viajante. Ativo os itens essenciais?</p>
+    <p class="site-entry__dialogue" id="site-entry-description" aria-live="polite"></p>
     <p class="site-entry__notice" id="site-entry-notice" aria-live="polite"></p>
-    <div class="site-entry__actions">
+    <div class="site-entry__actions" id="site-entry-actions">
       <button class="site-entry__accept" id="site-entry-accept" type="button">Sim</button>
       <button class="site-entry__decline" id="site-entry-decline" type="button">Agora não</button>
     </div>
@@ -1243,8 +1297,16 @@
   const siteEntryOverlay = document.getElementById('site-entry');
   const acceptButton = document.getElementById('site-entry-accept');
   const declineButton = document.getElementById('site-entry-decline');
+  const actions = document.getElementById('site-entry-actions');
+  const dialogue = document.getElementById('site-entry-description');
   const notice = document.getElementById('site-entry-notice');
   const siteScriptsSelector = 'script[data-site-script]';
+  const initialDialogue = 'Ei, viajante. Ativo os itens essenciais?';
+  const declinedDialogue = 'Entendo. Mas sem esses itens, parte do mapa fica bloqueada. Quer ativar agora?';
+  const typewriterDelayMs = 38;
+  const dialogueStartDelayMs = 760;
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let typewriterTimerId = null;
 
   function loadApprovedStyles() {
     if (document.getElementById('approved-fonts')) return;
@@ -1283,8 +1345,56 @@
     });
   }
 
+  function setEntryActionsVisible(isVisible) {
+    if (!actions) return;
+
+    actions.classList.toggle('is-visible', isVisible);
+    if (acceptButton) acceptButton.disabled = !isVisible;
+    if (declineButton) declineButton.disabled = !isVisible;
+  }
+
+  function typeDialogue(message, { delay = 0, onComplete } = {}) {
+    if (!dialogue) return;
+
+    clearTimeout(typewriterTimerId);
+    setEntryActionsVisible(false);
+    dialogue.textContent = '';
+    dialogue.classList.add('is-typing');
+
+    const finishDialogue = () => {
+      dialogue.textContent = message;
+      dialogue.classList.remove('is-typing');
+      setEntryActionsVisible(true);
+      onComplete?.();
+    };
+
+    if (prefersReducedMotion.matches) {
+      typewriterTimerId = setTimeout(finishDialogue, delay);
+      return;
+    }
+
+    let index = 0;
+    const typeNextCharacter = () => {
+      dialogue.textContent = message.slice(0, index);
+
+      if (index >= message.length) {
+        dialogue.classList.remove('is-typing');
+        setEntryActionsVisible(true);
+        onComplete?.();
+        return;
+      }
+
+      index += 1;
+      typewriterTimerId = setTimeout(typeNextCharacter, typewriterDelayMs);
+    };
+
+    typewriterTimerId = setTimeout(typeNextCharacter, delay);
+  }
+
   function hideSiteEntry() {
     if (!siteEntryOverlay) return;
+
+    clearTimeout(typewriterTimerId);
 
     siteEntryOverlay.classList.add('accepting');
     setTimeout(() => {
@@ -1319,23 +1429,31 @@
   }
 
   function declineSiteEntry() {
-    if (!siteEntryOverlay || !notice) return;
+    if (!siteEntryOverlay) return;
 
+    if (notice) notice.textContent = '';
     siteEntryOverlay.classList.remove('declined');
     void siteEntryOverlay.offsetWidth;
     siteEntryOverlay.classList.add('declined');
-    notice.textContent = 'Sem isso, parte do mapa fica bloqueada.';
-    acceptButton?.focus();
+    typeDialogue(declinedDialogue, {
+      onComplete: () => acceptButton?.focus()
+    });
   }
 
   function showSiteEntry() {
     if (!siteEntryOverlay) return;
 
+    if (notice) notice.textContent = '';
+    setEntryActionsVisible(false);
+    if (dialogue) dialogue.textContent = '';
     siteEntryOverlay.hidden = false;
-    siteEntryOverlay.classList.remove('accepting');
+    siteEntryOverlay.classList.remove('accepting', 'declined');
     requestAnimationFrame(() => {
       siteEntryOverlay.classList.add('visible');
-      acceptButton?.focus();
+      typeDialogue(initialDialogue, {
+        delay: dialogueStartDelayMs,
+        onComplete: () => acceptButton?.focus()
+      });
     });
   }
 
