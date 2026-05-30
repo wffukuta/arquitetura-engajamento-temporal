@@ -929,7 +929,7 @@
     }
 
 
-    .npc-gate {
+    .site-entry {
       position: fixed;
       inset: 0;
       z-index: 20000;
@@ -946,16 +946,16 @@
       transition: opacity 0.35s ease;
     }
 
-    .npc-gate[hidden] {
+    .site-entry[hidden] {
       display: none !important;
     }
 
-    .npc-gate.visible {
+    .site-entry.visible {
       opacity: 1;
       pointer-events: auto;
     }
 
-    .npc-gate__card {
+    .site-entry__card {
       position: relative;
       width: min(720px, 100%);
       border: 3px solid #000000;
@@ -969,7 +969,7 @@
       will-change: transform, opacity;
     }
 
-    .npc-gate__card::before {
+    .site-entry__card::before {
       content: '';
       position: absolute;
       top: -13px;
@@ -982,12 +982,12 @@
       transform: rotate(45deg);
     }
 
-    .npc-gate.visible .npc-gate__card {
+    .site-entry.visible .site-entry__card {
       transform: translateY(0) scale(1);
       opacity: 1;
     }
 
-    .npc-gate__media {
+    .site-entry__media {
       position: absolute;
       left: 50%;
       bottom: calc(100% - 10px);
@@ -1001,35 +1001,35 @@
       transform: translateX(-50%);
     }
 
-    .npc-gate__image {
+    .site-entry__image {
       width: 100%;
       height: auto;
       object-fit: contain;
       filter: drop-shadow(10px 16px 0 rgba(0, 0, 0, 0.24));
-      animation: npcFloat 2.8s ease-in-out infinite;
+      animation: siteEntryFloat 2.8s ease-in-out infinite;
     }
 
-    .npc-gate__crumb {
+    .site-entry__crumb {
       position: absolute;
       bottom: 10%;
       width: 10px;
       height: 10px;
       border: 1px solid #000000;
       background: #ffffff;
-      animation: npcCrumb 1.8s ease-in-out infinite;
+      animation: siteEntryCrumb 1.8s ease-in-out infinite;
     }
 
-    .npc-gate__crumb:nth-child(2) { left: 20%; animation-delay: 0.1s; }
-    .npc-gate__crumb:nth-child(3) { right: 18%; animation-delay: 0.45s; }
-    .npc-gate__crumb:nth-child(4) { left: 50%; bottom: 2%; animation-delay: 0.8s; }
+    .site-entry__crumb:nth-child(2) { left: 20%; animation-delay: 0.1s; }
+    .site-entry__crumb:nth-child(3) { right: 18%; animation-delay: 0.45s; }
+    .site-entry__crumb:nth-child(4) { left: 50%; bottom: 2%; animation-delay: 0.8s; }
 
-    .npc-gate h2 {
+    .site-entry h2 {
       margin: 0 0 8px;
       font-size: clamp(18px, 4vw, 24px);
       text-align: left;
     }
 
-    .npc-gate p {
+    .site-entry p {
       margin: 0 0 12px;
       max-width: none;
       color: var(--text-muted);
@@ -1038,13 +1038,13 @@
       text-align: left;
     }
 
-    .npc-gate__notice {
+    .site-entry__notice {
       min-height: 20px;
       color: #7a1f1f;
       font-weight: 700;
     }
 
-    .npc-gate__actions {
+    .site-entry__actions {
       display: flex;
       flex-wrap: wrap;
       justify-content: flex-end;
@@ -1052,7 +1052,7 @@
       margin-top: 8px;
     }
 
-    .npc-gate__actions button {
+    .site-entry__actions button {
       border: 2px solid #000000;
       box-shadow: 3px 3px 0 #000000;
       padding: 10px 18px;
@@ -1064,45 +1064,45 @@
       transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
     }
 
-    .npc-gate__actions button:hover,
-    .npc-gate__actions button:focus-visible {
+    .site-entry__actions button:hover,
+    .site-entry__actions button:focus-visible {
       transform: translate(-2px, -2px);
       box-shadow: 5px 5px 0 #000000;
     }
 
-    .npc-gate__accept {
+    .site-entry__accept {
       background: #000000;
       color: #ffffff;
     }
 
-    .npc-gate__decline {
+    .site-entry__decline {
       background: #ffffff;
       color: #000000;
     }
 
-    .npc-gate.accepting .npc-gate__card {
-      animation: npcAcceptExit 0.58s ease forwards;
+    .site-entry.accepting .site-entry__card {
+      animation: siteEntryAcceptExit 0.58s ease forwards;
     }
 
-    .npc-gate.declined .npc-gate__card {
-      animation: npcRefuseShake 0.42s ease;
+    .site-entry.declined .site-entry__card {
+      animation: siteEntryRefuseShake 0.42s ease;
     }
 
-    @keyframes npcFloat {
+    @keyframes siteEntryFloat {
       0%, 100% { transform: translateY(0) rotate(-2deg); }
       50% { transform: translateY(-10px) rotate(2deg); }
     }
 
-    @keyframes npcCrumb {
+    @keyframes siteEntryCrumb {
       0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.5; }
       50% { transform: translateY(-14px) rotate(18deg); opacity: 1; }
     }
 
-    @keyframes npcAcceptExit {
+    @keyframes siteEntryAcceptExit {
       to { transform: translateY(130%) scale(0.92); opacity: 0; }
     }
 
-    @keyframes npcRefuseShake {
+    @keyframes siteEntryRefuseShake {
       0%, 100% { transform: translateX(0) translateY(0) scale(1); }
       25% { transform: translateX(-8px) translateY(0) scale(1); }
       50% { transform: translateX(8px) translateY(0) scale(1); }
@@ -1110,10 +1110,10 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .npc-gate,
-      .npc-gate__card,
-      .npc-gate__image,
-      .npc-gate__crumb {
+      .site-entry,
+      .site-entry__card,
+      .site-entry__image,
+      .site-entry__crumb {
         animation-duration: 0.01ms !important;
         transition-duration: 0.01ms !important;
       }
@@ -1218,33 +1218,33 @@
   </div>
 </section>
 
-<section class="npc-gate" id="npc-gate" aria-labelledby="npc-gate-title" aria-describedby="npc-gate-description" role="dialog" aria-modal="true" hidden>
-  <div class="npc-gate__card" role="document">
-    <div class="npc-gate__media" aria-hidden="true">
-      <img class="npc-gate__image" src="./assets/Coockie.png" alt="" />
-      <span class="npc-gate__crumb"></span>
-      <span class="npc-gate__crumb"></span>
-      <span class="npc-gate__crumb"></span>
+<section class="site-entry" id="site-entry" aria-labelledby="site-entry-title" aria-describedby="site-entry-description" role="dialog" aria-modal="true" hidden>
+  <div class="site-entry__card" role="document">
+    <div class="site-entry__media" aria-hidden="true">
+      <img class="site-entry__image" src="./assets/guardiao.png" alt="" />
+      <span class="site-entry__crumb"></span>
+      <span class="site-entry__crumb"></span>
+      <span class="site-entry__crumb"></span>
     </div>
-    <h2 id="npc-gate-title">Guardião</h2>
-    <p id="npc-gate-description">Ei, viajante. Ativo os itens essenciais?</p>
-    <p class="npc-gate__notice" id="npc-gate-notice" aria-live="polite"></p>
-    <div class="npc-gate__actions">
-      <button class="npc-gate__accept" id="npc-accept" type="button">Sim</button>
-      <button class="npc-gate__decline" id="npc-decline" type="button">Agora não</button>
+    <h2 id="site-entry-title">Guardião</h2>
+    <p id="site-entry-description">Ei, viajante. Ativo os itens essenciais?</p>
+    <p class="site-entry__notice" id="site-entry-notice" aria-live="polite"></p>
+    <div class="site-entry__actions">
+      <button class="site-entry__accept" id="site-entry-accept" type="button">Sim</button>
+      <button class="site-entry__decline" id="site-entry-decline" type="button">Agora não</button>
     </div>
   </div>
 </section>
 
 <script>
 (function () {
-  const gateKey = 'wffukuta_site_gate_v3';
+  const siteEntryKey = 'wffukuta_site_entry_v1';
   const acceptedValue = 'accepted';
-  const gateOverlay = document.getElementById('npc-gate');
-  const acceptButton = document.getElementById('npc-accept');
-  const declineButton = document.getElementById('npc-decline');
-  const notice = document.getElementById('npc-gate-notice');
-  const gatedScriptsSelector = 'script[data-gate-script]';
+  const siteEntryOverlay = document.getElementById('site-entry');
+  const acceptButton = document.getElementById('site-entry-accept');
+  const declineButton = document.getElementById('site-entry-decline');
+  const notice = document.getElementById('site-entry-notice');
+  const siteScriptsSelector = 'script[data-site-script]';
 
   function loadApprovedStyles() {
     if (document.getElementById('approved-fonts')) return;
@@ -1256,20 +1256,20 @@
     document.head.appendChild(fonts);
   }
 
-  let gatedScriptsActivated = false;
+  let siteScriptsActivated = false;
 
-  function activateGatedScripts() {
-    if (gatedScriptsActivated) return;
+  function activateSiteScripts() {
+    if (siteScriptsActivated) return;
 
-    const scripts = Array.from(document.querySelectorAll(gatedScriptsSelector));
-    gatedScriptsActivated = true;
+    const scripts = Array.from(document.querySelectorAll(siteScriptsSelector));
+    siteScriptsActivated = true;
 
     scripts.forEach(originalScript => {
       const script = document.createElement('script');
       const explicitType = originalScript.dataset.scriptType;
 
       Array.from(originalScript.attributes).forEach(attribute => {
-        if (attribute.name === 'type' || attribute.name === 'data-gate-script' || attribute.name === 'data-script-type') return;
+        if (attribute.name === 'type' || attribute.name === 'data-site-script' || attribute.name === 'data-script-type') return;
         script.setAttribute(attribute.name, attribute.value);
       });
 
@@ -1283,82 +1283,82 @@
     });
   }
 
-  function hideGate() {
-    if (!gateOverlay) return;
+  function hideSiteEntry() {
+    if (!siteEntryOverlay) return;
 
-    gateOverlay.classList.add('accepting');
+    siteEntryOverlay.classList.add('accepting');
     setTimeout(() => {
-      gateOverlay.classList.remove('visible', 'accepting');
-      gateOverlay.hidden = true;
+      siteEntryOverlay.classList.remove('visible', 'accepting');
+      siteEntryOverlay.hidden = true;
     }, 560);
   }
 
-  function acceptGate() {
+  function acceptSiteEntry() {
     if (notice) notice.textContent = '';
 
     try {
       loadApprovedStyles();
-      activateGatedScripts();
+      activateSiteScripts();
     } catch (error) {
       console.error('Não foi possível ativar os recursos após o aceite:', error);
-      gatedScriptsActivated = false;
+      siteScriptsActivated = false;
       if (notice) {
         notice.textContent = 'Falhou. Recarregue e tente de novo.';
       }
-      showGate();
+      showSiteEntry();
       return;
     }
 
     try {
-      localStorage.setItem(gateKey, acceptedValue);
+      localStorage.setItem(siteEntryKey, acceptedValue);
     } catch (error) {
       console.warn('Não foi possível salvar a escolha:', error);
     }
 
-    hideGate();
+    hideSiteEntry();
   }
 
-  function declineGate() {
-    if (!gateOverlay || !notice) return;
+  function declineSiteEntry() {
+    if (!siteEntryOverlay || !notice) return;
 
-    gateOverlay.classList.remove('declined');
-    void gateOverlay.offsetWidth;
-    gateOverlay.classList.add('declined');
+    siteEntryOverlay.classList.remove('declined');
+    void siteEntryOverlay.offsetWidth;
+    siteEntryOverlay.classList.add('declined');
     notice.textContent = 'Sem isso, parte do mapa fica bloqueada.';
     acceptButton?.focus();
   }
 
-  function showGate() {
-    if (!gateOverlay) return;
+  function showSiteEntry() {
+    if (!siteEntryOverlay) return;
 
-    gateOverlay.hidden = false;
-    gateOverlay.classList.remove('accepting');
+    siteEntryOverlay.hidden = false;
+    siteEntryOverlay.classList.remove('accepting');
     requestAnimationFrame(() => {
-      gateOverlay.classList.add('visible');
+      siteEntryOverlay.classList.add('visible');
       acceptButton?.focus();
     });
   }
 
-  acceptButton?.addEventListener('click', acceptGate);
-  declineButton?.addEventListener('click', declineGate);
+  acceptButton?.addEventListener('click', acceptSiteEntry);
+  declineButton?.addEventListener('click', declineSiteEntry);
 
   let alreadyAccepted = false;
   try {
-    alreadyAccepted = localStorage.getItem(gateKey) === acceptedValue;
+    alreadyAccepted = localStorage.getItem(siteEntryKey) === acceptedValue;
   } catch (error) {
     alreadyAccepted = false;
   }
 
   if (alreadyAccepted) {
     loadApprovedStyles();
-    activateGatedScripts();
+    activateSiteScripts();
   } else {
-    showGate();
+    showSiteEntry();
   }
 })();
 </script>
 
-<script type="text/plain" data-gate-script>
+<script type="text/plain" data-site-script>
 const meshCanvas = document.getElementById('mesh-bg');
 const meshCtx = meshCanvas.getContext('2d');
 const headerElement = document.querySelector('header');
@@ -2057,7 +2057,7 @@ document.getElementById('about-section').style.display = 'none';
 
   
   
-<script type="text/plain" data-gate-script>
+<script type="text/plain" data-site-script>
 // Sua URL do Google Sheets (TSV)
 const sheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTWPZAcT8ZfbRTSlM-89fg5gHQaK5XGiL1TpTbMHvv7OZV4fOIYjHH2-HjOpEBgdwrp0ayJMv2Bpw6i/pub?gid=519673108&single=true&output=tsv';
 
@@ -2341,7 +2341,7 @@ fetch(sheetURL, { signal: sheetController.signal })
   });
 </script>
 
-<script type="text/plain" data-gate-script data-script-type="module">
+<script type="text/plain" data-site-script data-script-type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js';
 import {
   getAuth,
@@ -2637,7 +2637,7 @@ projectForm?.addEventListener('submit', async e => {
 
 </script>
 
-<script type="text/plain" data-gate-script>
+<script type="text/plain" data-site-script>
 let currentAboutStep = 0;
 const aboutNextAudio = new Audio('./assets/folhaspassando.mp3');
 
