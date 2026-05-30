@@ -946,6 +946,10 @@
       transition: opacity 0.35s ease;
     }
 
+    .cookie-consent[hidden] {
+      display: none !important;
+    }
+
     .cookie-consent.visible {
       opacity: 1;
       pointer-events: auto;
@@ -1215,7 +1219,8 @@
 
 <script>
 (function () {
-  const consentKey = 'wffukuta_cookie_consent';
+  const consentKey = 'wffukuta_cookie_consent_v2';
+  const acceptedValue = 'accepted';
   const consentOverlay = document.getElementById('cookie-consent');
   const acceptButton = document.getElementById('cookie-accept');
   const declineButton = document.getElementById('cookie-decline');
@@ -1232,8 +1237,13 @@
     document.head.appendChild(fonts);
   }
 
+  let gatedScriptsActivated = false;
+
   function activateGatedScripts() {
+    if (gatedScriptsActivated) return;
+
     const scripts = Array.from(document.querySelectorAll(gatedScriptsSelector));
+    gatedScriptsActivated = true;
 
     scripts.forEach(originalScript => {
       const script = document.createElement('script');
@@ -1265,15 +1275,28 @@
   }
 
   function acceptConsent() {
+    if (notice) notice.textContent = '';
+
     try {
-      localStorage.setItem(consentKey, 'accepted');
+      loadApprovedStyles();
+      activateGatedScripts();
+    } catch (error) {
+      console.error('Não foi possível ativar os recursos após o aceite:', error);
+      gatedScriptsActivated = false;
+      if (notice) {
+        notice.textContent = 'Não foi possível ativar os recursos agora. Atualize a página e tente aceitar novamente.';
+      }
+      showConsent();
+      return;
+    }
+
+    try {
+      localStorage.setItem(consentKey, acceptedValue);
     } catch (error) {
       console.warn('Não foi possível salvar o aceite de cookies:', error);
     }
 
     hideConsent();
-    loadApprovedStyles();
-    activateGatedScripts();
   }
 
   function declineConsent() {
@@ -1290,6 +1313,7 @@
     if (!consentOverlay) return;
 
     consentOverlay.hidden = false;
+    consentOverlay.classList.remove('accepting');
     requestAnimationFrame(() => {
       consentOverlay.classList.add('visible');
       acceptButton?.focus();
@@ -1301,7 +1325,7 @@
 
   let alreadyAccepted = false;
   try {
-    alreadyAccepted = localStorage.getItem(consentKey) === 'accepted';
+    alreadyAccepted = localStorage.getItem(consentKey) === acceptedValue;
   } catch (error) {
     alreadyAccepted = false;
   }
@@ -2020,6 +2044,7 @@ const sheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTWPZAcT8ZfbRT
 
 const container = document.getElementById('lista');
 const statusText = document.getElementById('status-text');
+const sheetLoadTimeout = 12000;
 const videoModal = document.getElementById('video-modal');
 const videoFrame = document.getElementById('video-frame');
 const videoClose = document.getElementById('video-close');
@@ -2195,12 +2220,16 @@ videoDragHandle.addEventListener('pointerdown', event => {
 positionModalBottomRight();
 closeVideoEmbed();
 
-fetch(sheetURL)
+const sheetController = new AbortController();
+const sheetTimeoutId = window.setTimeout(() => sheetController.abort(), sheetLoadTimeout);
+
+fetch(sheetURL, { signal: sheetController.signal })
   .then(response => {
     if (!response.ok) throw new Error('A planilha não respondeu corretamente (Erro: ' + response.status + ')');
     return response.text();
   })
   .then(tsv => {
+    window.clearTimeout(sheetTimeoutId);
     // Limpa o texto de "Carregando"
     container.innerHTML = '';
 
@@ -2279,9 +2308,14 @@ fetch(sheetURL)
     });
   })
   .catch(err => {
+    window.clearTimeout(sheetTimeoutId);
+    const message = err.name === 'AbortError'
+      ? 'Tempo limite excedido ao carregar a planilha.'
+      : err.message;
+
     statusText.innerHTML = `
       <div>❌ Erro ao carregar</div>
-      <div class="error-log">${err.message}</div>
+      <div class="error-log">${message}</div>
       <p style="font-size:12px; margin-top:10px">Verifique se a planilha está "Publicada na Web" como TSV.</p>
     `;
     console.error("Erro detalhado:", err);
