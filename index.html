@@ -31,6 +31,36 @@
       position: relative;
       transform-style: preserve-3d;
       perspective: 1400px;
+      opacity: 1;
+      filter: none;
+    }
+
+    body.site-content-pending .screen-stage {
+      opacity: 0;
+      filter: blur(5px);
+      transform: translateY(18px) scale(0.985);
+      pointer-events: none;
+    }
+
+    body.site-content-ready .screen-stage {
+      animation: siteContentReveal 0.82s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    @keyframes siteContentReveal {
+      0% {
+        opacity: 0;
+        filter: blur(5px);
+        transform: translateY(18px) scale(0.985);
+      }
+      58% {
+        opacity: 1;
+        filter: blur(1px);
+      }
+      100% {
+        opacity: 1;
+        filter: none;
+        transform: translateY(0) scale(1);
+      }
     }
 
     body.screen-fall {
@@ -170,6 +200,24 @@
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
       gap: 16px;
+    }
+
+    .grid.grid--loaded .card {
+      animation: projectCardReveal 0.58s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+      animation-delay: calc(var(--reveal-index, 0) * 70ms);
+    }
+
+    @keyframes projectCardReveal {
+      from {
+        opacity: 0;
+        transform: translateY(18px) scale(0.975);
+        filter: blur(3px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: none;
+      }
     }
 
     .card {
@@ -340,6 +388,50 @@
       padding: 40px;
       color: var(--text-muted);
       grid-column: 1 / -1;
+    }
+
+    .status-msg.loading-msg {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      min-height: 120px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-weight: 700;
+      color: #000000;
+    }
+
+    .status-msg.loading-msg::before {
+      content: '';
+      width: 12px;
+      height: 12px;
+      border: 2px solid #000000;
+      background: #ffffff;
+      box-shadow: -22px 0 0 #000000, 22px 0 0 #ffffff;
+      animation: loadingBlocks 0.9s steps(3, end) infinite;
+    }
+
+    .status-msg.loading-msg::after {
+      content: '';
+      width: min(180px, 56vw);
+      height: 3px;
+      border: 1px solid #000000;
+      background: linear-gradient(90deg, #000000 0 34%, transparent 34% 100%);
+      background-size: 54px 100%;
+      animation: loadingTrack 0.95s linear infinite;
+    }
+
+    @keyframes loadingBlocks {
+      0% { transform: translateX(-6px) rotate(0deg); box-shadow: -22px 0 0 #000000, 22px 0 0 #ffffff; }
+      50% { transform: translateX(0) rotate(4deg); box-shadow: -22px 0 0 #ffffff, 22px 0 0 #000000; }
+      100% { transform: translateX(6px) rotate(0deg); box-shadow: -22px 0 0 #000000, 22px 0 0 #ffffff; }
+    }
+
+    @keyframes loadingTrack {
+      from { background-position: 0 0; }
+      to { background-position: 54px 0; }
     }
 
     .error-log {
@@ -1162,6 +1254,10 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
+      body.site-content-ready .screen-stage,
+      .grid.grid--loaded .card,
+      .status-msg.loading-msg::before,
+      .status-msg.loading-msg::after,
       .site-entry,
       .site-entry__card,
       .site-entry__media,
@@ -1169,13 +1265,14 @@
       .site-entry__crumb,
       .site-entry__dialogue.is-typing::after {
         animation-duration: 0.01ms !important;
+        animation-delay: 0s !important;
         transition-duration: 0.01ms !important;
       }
     }
 
   </style>
 </head>
-<body>
+<body class="site-content-pending">
 
 <div class="screen-stage">
 
@@ -1209,7 +1306,7 @@
 </section>
 
   <div class="grid" id="lista">
-    <div class="status-msg" id="status-text">CARREGANDO INFORMAÇÕES</div>
+    <div class="status-msg loading-msg" id="status-text" role="status" aria-live="polite">CARREGANDO INFORMAÇÕES</div>
   </div>
 </main>
 
@@ -1408,6 +1505,8 @@
     try {
       loadApprovedStyles();
       activateSiteScripts();
+      document.body.classList.remove('site-content-pending');
+      document.body.classList.add('site-content-ready');
       return true;
     } catch (error) {
       console.error('Não foi possível ativar os recursos da interface:', error);
@@ -2201,6 +2300,7 @@ const sheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTWPZAcT8ZfbRT
 
 const container = document.getElementById('lista');
 const statusText = document.getElementById('status-text');
+container?.classList.remove('grid--loaded');
 const sheetLoadTimeout = 12000;
 const videoModal = document.getElementById('video-modal');
 const videoFrame = document.getElementById('video-frame');
@@ -2388,6 +2488,7 @@ fetch(sheetURL, { signal: sheetController.signal })
   .then(tsv => {
     window.clearTimeout(sheetTimeoutId);
     // Limpa o texto de "Carregando"
+    container.classList.remove('grid--loaded');
     container.innerHTML = '';
 
     const linhas = tsv.trim().split('\n');
@@ -2395,6 +2496,7 @@ fetch(sheetURL, { signal: sheetController.signal })
     // Se a planilha estiver vazia (só o cabeçalho ou nada)
     if (linhas.length <= 1) {
       container.innerHTML = '<div class="status-msg">Nenhum projeto encontrado na planilha.</div>';
+      container.classList.add('grid--loaded');
       return;
     }
 
@@ -2445,6 +2547,7 @@ fetch(sheetURL, { signal: sheetController.signal })
 
       card.className = `card ${classeSuporte}`.trim();
       card.dataset.custos = custos;
+      card.style.setProperty('--reveal-index', index);
       card.innerHTML = `
         <h2>${projeto}</h2>
         <div class="row"><strong>Gênero:</strong> ${genero}</div>
@@ -2463,6 +2566,10 @@ fetch(sheetURL, { signal: sheetController.signal })
 
       container.appendChild(card);
     });
+
+    requestAnimationFrame(() => {
+      container.classList.add('grid--loaded');
+    });
   })
   .catch(err => {
     window.clearTimeout(sheetTimeoutId);
@@ -2470,6 +2577,7 @@ fetch(sheetURL, { signal: sheetController.signal })
       ? 'Tempo limite excedido ao carregar a planilha.'
       : err.message;
 
+    statusText.classList.remove('loading-msg');
     statusText.innerHTML = `
       <div>❌ Erro ao carregar</div>
       <div class="error-log">${message}</div>
