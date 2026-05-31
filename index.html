@@ -395,7 +395,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 14px;
+      gap: 10px;
       min-height: 120px;
       text-transform: uppercase;
       letter-spacing: 0.12em;
@@ -403,35 +403,44 @@
       color: #000000;
     }
 
-    .status-msg.loading-msg::before {
-      content: '';
-      width: 12px;
-      height: 12px;
-      border: 2px solid #000000;
-      background: #ffffff;
-      box-shadow: -22px 0 0 #000000, 22px 0 0 #ffffff;
-      animation: loadingBlocks 0.9s steps(3, end) infinite;
+    .loading-msg__floaters {
+      position: relative;
+      width: 86px;
+      height: 44px;
+      margin-bottom: 2px;
+      opacity: 0.82;
     }
 
-    .status-msg.loading-msg::after {
-      content: '';
-      width: min(180px, 56vw);
-      height: 3px;
+    .loading-msg__square {
+      position: absolute;
+      width: 10px;
+      height: 10px;
       border: 1px solid #000000;
-      background: linear-gradient(90deg, #000000 0 34%, transparent 34% 100%);
-      background-size: 54px 100%;
-      animation: loadingTrack 0.95s linear infinite;
+      background: #ffffff;
+      animation: siteEntryCrumb 1.8s ease-in-out infinite;
     }
 
-    @keyframes loadingBlocks {
-      0% { transform: translateX(-6px) rotate(0deg); box-shadow: -22px 0 0 #000000, 22px 0 0 #ffffff; }
-      50% { transform: translateX(0) rotate(4deg); box-shadow: -22px 0 0 #ffffff, 22px 0 0 #000000; }
-      100% { transform: translateX(6px) rotate(0deg); box-shadow: -22px 0 0 #000000, 22px 0 0 #ffffff; }
+    .loading-msg__square:nth-child(1) {
+      left: 10px;
+      bottom: 10px;
+      animation-delay: 0.1s;
     }
 
-    @keyframes loadingTrack {
-      from { background-position: 0 0; }
-      to { background-position: 54px 0; }
+    .loading-msg__square:nth-child(2) {
+      right: 10px;
+      bottom: 14px;
+      animation-delay: 0.45s;
+    }
+
+    .loading-msg__square:nth-child(3) {
+      left: 50%;
+      bottom: 2px;
+      transform: translateX(-50%);
+      animation-delay: 0.8s;
+    }
+
+    .loading-msg__text {
+      display: block;
     }
 
     .error-log {
@@ -1256,8 +1265,7 @@
     @media (prefers-reduced-motion: reduce) {
       body.site-content-ready .screen-stage,
       .grid.grid--loaded .card,
-      .status-msg.loading-msg::before,
-      .status-msg.loading-msg::after,
+      .loading-msg__square,
       .site-entry,
       .site-entry__card,
       .site-entry__media,
@@ -1306,7 +1314,14 @@
 </section>
 
   <div class="grid" id="lista">
-    <div class="status-msg loading-msg" id="status-text" role="status" aria-live="polite">CARREGANDO INFORMAÇÕES</div>
+    <div class="status-msg loading-msg" id="status-text" role="status" aria-live="polite">
+      <span class="loading-msg__floaters" aria-hidden="true">
+        <span class="loading-msg__square"></span>
+        <span class="loading-msg__square"></span>
+        <span class="loading-msg__square"></span>
+      </span>
+      <span class="loading-msg__text">CARREGANDO INFORMAÇÕES</span>
+    </div>
   </div>
 </main>
 
