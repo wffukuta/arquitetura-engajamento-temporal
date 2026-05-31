@@ -1479,9 +1479,17 @@
     alreadyAccepted = false;
   }
 
+  function activateSiteScriptsWhenReady() {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', activateInterfaceAfterNotice, { once: true });
+      return;
+    }
+
+    activateInterfaceAfterNotice();
+  }
+
   if (alreadyAccepted) {
-    loadApprovedStyles();
-    activateSiteScripts();
+    activateSiteScriptsWhenReady();
   } else {
     showSiteEntry();
   }
