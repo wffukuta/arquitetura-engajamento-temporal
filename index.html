@@ -1213,6 +1213,103 @@
       color: #000000;
     }
 
+
+    .site-entry__terms-link {
+      border: none;
+      border-bottom: 1px dotted currentColor;
+      background: linear-gradient(180deg, transparent 58%, rgba(0, 0, 0, 0.12) 58%);
+      color: #000000;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 700;
+      padding: 0 1px;
+      text-decoration: none;
+    }
+
+    .site-entry__terms-link:hover,
+    .site-entry__terms-link:focus-visible {
+      background: #000000;
+      color: #ffffff;
+      outline: 2px solid #000000;
+      outline-offset: 2px;
+    }
+
+    .terms-modal {
+      position: fixed;
+      top: 50%;
+      right: 22px;
+      z-index: 21000;
+      width: min(360px, calc(100vw - 44px));
+      max-height: min(78vh, 620px);
+      border: 3px solid #000000;
+      background: #ffffff;
+      box-shadow: 8px 8px 0 #000000;
+      color: var(--text-main);
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(18px, -50%) scale(0.96);
+      transition: opacity 0.24s ease, transform 0.24s ease;
+    }
+
+    .terms-modal.open {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translate(0, -50%) scale(1);
+    }
+
+    .terms-modal[hidden] {
+      display: none !important;
+    }
+
+    .terms-modal__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 2px solid #000000;
+      background: #000000;
+      color: #ffffff;
+      padding: 10px 12px;
+    }
+
+    .terms-modal__header h3 {
+      margin: 0;
+      font-size: 14px;
+    }
+
+    .terms-modal__close {
+      width: 30px;
+      height: 30px;
+      border: 1px solid #ffffff;
+      background: #ffffff;
+      color: #000000;
+      cursor: pointer;
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .terms-modal__body {
+      padding: 12px 14px 14px;
+      overflow-y: auto;
+      max-height: calc(min(78vh, 620px) - 52px);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .terms-modal__body p,
+    .terms-modal__body ul {
+      margin: 0 0 10px;
+    }
+
+    .terms-modal__body ul {
+      padding-left: 18px;
+    }
+
+    .terms-modal__body strong {
+      color: #000000;
+    }
+
     .site-entry.accepting .site-entry__card {
       animation: siteEntryAcceptExit 0.58s ease forwards;
     }
@@ -1260,6 +1357,22 @@
       25% { transform: translateX(-8px) translateY(0) scale(1); }
       50% { transform: translateX(8px) translateY(0) scale(1); }
       75% { transform: translateX(-5px) translateY(0) scale(1); }
+    }
+
+
+    @media (max-width: 640px) {
+      .terms-modal {
+        top: auto;
+        right: 14px;
+        bottom: 14px;
+        width: calc(100vw - 28px);
+        max-height: 70vh;
+        transform: translateY(18px) scale(0.96);
+      }
+
+      .terms-modal.open {
+        transform: translateY(0) scale(1);
+      }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -1402,17 +1515,38 @@
   </div>
 </section>
 
+<aside class="terms-modal" id="terms-modal" role="dialog" aria-modal="false" aria-labelledby="terms-modal-title" hidden>
+  <div class="terms-modal__header">
+    <h3 id="terms-modal-title">Termos, privacidade e biscoitos</h3>
+    <button class="terms-modal__close" id="terms-modal-close" type="button" aria-label="Fechar termos">×</button>
+  </div>
+  <div class="terms-modal__body">
+    <p><strong>Resumo de uso:</strong> este site usa recursos essenciais para funcionar e, somente após sua confirmação em <strong>Entendi</strong>, ativa experiências interativas como animações, áudio, chat de contato, carregamento de projetos e preferências locais.</p>
+    <ul>
+      <li><strong>Dados tratados:</strong> preferências salvas no navegador, dados técnicos básicos de navegação e mensagens enviadas voluntariamente no chat ou formulários.</li>
+      <li><strong>Finalidade:</strong> liberar a navegação, melhorar estabilidade, responder contatos e demonstrar recursos de engajamento temporal.</li>
+      <li><strong>Base LGPD:</strong> consentimento do titular e execução de funcionalidades solicitadas pelo usuário, conforme aplicável.</li>
+      <li><strong>Biscoitos/cookies:</strong> podem guardar sua escolha de entrada e preferências locais para evitar solicitar a mesma confirmação repetidamente.</li>
+      <li><strong>Compartilhamento:</strong> dados podem passar por serviços necessários ao funcionamento, como autenticação, hospedagem, e-mail ou vídeo incorporado.</li>
+      <li><strong>Seus direitos:</strong> você pode solicitar confirmação de tratamento, acesso, correção, exclusão, portabilidade, informação sobre compartilhamento e revogação do consentimento.</li>
+    </ul>
+    <p>Ao tocar em <strong>Entendi</strong>, você declara ciência destes termos e autoriza a ativação dos recursos do site. Caso não concorde, feche esta página ou não prossiga.</p>
+  </div>
+</aside>
+
+
 <script>
 (function () {
   const siteEntryKey = 'wffukuta_site_entry_v1';
   const acceptedValue = 'accepted';
-  const essentialValue = 'essential';
   const siteEntryOverlay = document.getElementById('site-entry');
   const acceptButton = document.getElementById('site-entry-accept');
   const declineButton = document.getElementById('site-entry-decline');
   const actions = document.getElementById('site-entry-actions');
   const dialogue = document.getElementById('site-entry-description');
   const notice = document.getElementById('site-entry-notice');
+  const termsModal = document.getElementById('terms-modal');
+  const termsModalClose = document.getElementById('terms-modal-close');
   const siteScriptsSelector = 'script[data-site-script]';
   const initialDialogue = 'Olá, aceita esse biscoito junto com os termos da política de privacidade e condições de uso desse site?';
   const declinedDialogue = 'As principais funções para aplicar a EAT (arquitetura de engajamento temporal) precisa de usar recursos relacionado a coleta e analise de dados, portanto para acessar é necessário ler e concordar com a política de privacidade e termos de condições e uso.';
@@ -1429,6 +1563,57 @@
     fonts.rel = 'stylesheet';
     fonts.href = 'https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&display=swap';
     document.head.appendChild(fonts);
+  }
+
+
+  function openTermsModal() {
+    if (!termsModal) return;
+
+    termsModal.hidden = false;
+    requestAnimationFrame(() => {
+      termsModal.classList.add('open');
+      termsModalClose?.focus();
+    });
+  }
+
+  function closeTermsModal() {
+    if (!termsModal) return;
+
+    termsModal.classList.remove('open');
+    setTimeout(() => {
+      if (!termsModal.classList.contains('open')) {
+        termsModal.hidden = true;
+      }
+    }, 240);
+  }
+
+  function renderLinkedDialogue(message) {
+    if (!dialogue) return;
+
+    const linkPattern = /(política de privacidade|termos de condições e uso|condições de uso|biscoito|termos)/gi;
+    const fragment = document.createDocumentFragment();
+    let cursor = 0;
+
+    message.replace(linkPattern, (match, _term, offset) => {
+      if (offset > cursor) {
+        fragment.append(document.createTextNode(message.slice(cursor, offset)));
+      }
+
+      const linkButton = document.createElement('button');
+      linkButton.type = 'button';
+      linkButton.className = 'site-entry__terms-link';
+      linkButton.textContent = match;
+      linkButton.setAttribute('aria-label', `Abrir termos e privacidade sobre ${match}`);
+      fragment.append(linkButton);
+      cursor = offset + match.length;
+      return match;
+    });
+
+    if (cursor < message.length) {
+      fragment.append(document.createTextNode(message.slice(cursor)));
+    }
+
+    dialogue.replaceChildren(fragment);
   }
 
   let siteScriptsActivated = false;
@@ -1475,7 +1660,7 @@
     dialogue.classList.add('is-typing');
 
     const finishDialogue = () => {
-      dialogue.textContent = message;
+      renderLinkedDialogue(message);
       dialogue.classList.remove('is-typing');
       setEntryActionsVisible(true);
       onComplete?.();
@@ -1491,6 +1676,7 @@
       dialogue.textContent = message.slice(0, index);
 
       if (index >= message.length) {
+        renderLinkedDialogue(message);
         dialogue.classList.remove('is-typing');
         setEntryActionsVisible(true);
         onComplete?.();
@@ -1558,11 +1744,7 @@
     void siteEntryOverlay.offsetWidth;
     siteEntryOverlay.classList.add('declined');
     typeDialogue(declinedDialogue, {
-      onComplete: () => {
-        if (!activateInterfaceAfterNotice()) return;
-        rememberEntryChoice(essentialValue);
-        hideSiteEntry();
-      }
+      onComplete: () => acceptButton?.focus()
     });
   }
 
@@ -1585,10 +1767,21 @@
 
   acceptButton?.addEventListener('click', acceptSiteEntry);
   declineButton?.addEventListener('click', declineSiteEntry);
+  dialogue?.addEventListener('click', event => {
+    if (event.target.closest('.site-entry__terms-link')) {
+      openTermsModal();
+    }
+  });
+  termsModalClose?.addEventListener('click', closeTermsModal);
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && termsModal?.classList.contains('open')) {
+      closeTermsModal();
+    }
+  });
 
   let alreadyAccepted = false;
   try {
-    alreadyAccepted = [acceptedValue, essentialValue].includes(localStorage.getItem(siteEntryKey));
+    alreadyAccepted = localStorage.getItem(siteEntryKey) === acceptedValue;
   } catch (error) {
     alreadyAccepted = false;
   }
