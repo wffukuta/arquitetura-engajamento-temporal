@@ -1284,8 +1284,8 @@
     <p class="site-entry__dialogue" id="site-entry-description" aria-live="polite"></p>
     <p class="site-entry__notice" id="site-entry-notice" aria-live="polite"></p>
     <div class="site-entry__actions" id="site-entry-actions">
-      <button class="site-entry__accept" id="site-entry-accept" type="button">Sim</button>
-      <button class="site-entry__decline" id="site-entry-decline" type="button">Agora não</button>
+      <button class="site-entry__accept" id="site-entry-accept" type="button">Entendi</button>
+      <button class="site-entry__decline" id="site-entry-decline" type="button">Só navegar</button>
     </div>
   </div>
 </section>
@@ -1294,6 +1294,7 @@
 (function () {
   const siteEntryKey = 'wffukuta_site_entry_v1';
   const acceptedValue = 'accepted';
+  const essentialValue = 'essential';
   const siteEntryOverlay = document.getElementById('site-entry');
   const acceptButton = document.getElementById('site-entry-accept');
   const declineButton = document.getElementById('site-entry-decline');
@@ -1301,8 +1302,8 @@
   const dialogue = document.getElementById('site-entry-description');
   const notice = document.getElementById('site-entry-notice');
   const siteScriptsSelector = 'script[data-site-script]';
-  const initialDialogue = 'Oi, você aceita o biscoito do site?';
-  const declinedDialogue = 'Entendo. Mas sem aceitar o site não funciona, quer aceitar agora?';
+  const initialDialogue = 'Aviso rápido: este site usa apenas recursos necessários da interface e salva sua escolha neste navegador para não repetir o recado.';
+  const declinedDialogue = 'Tudo bem. Você pode navegar normalmente; vou guardar só a preferência essencial deste aviso.';
   const typewriterDelayMs = 38;
   const dialogueStartDelayMs = 760;
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -1403,28 +1404,35 @@
     }, 560);
   }
 
-  function acceptSiteEntry() {
-    if (notice) notice.textContent = '';
-
+  function activateInterfaceAfterNotice() {
     try {
       loadApprovedStyles();
       activateSiteScripts();
+      return true;
     } catch (error) {
-      console.error('Não foi possível ativar os recursos após o aceite:', error);
+      console.error('Não foi possível ativar os recursos da interface:', error);
       siteScriptsActivated = false;
       if (notice) {
         notice.textContent = 'Falhou. Recarregue e tente de novo.';
       }
       showSiteEntry();
-      return;
+      return false;
     }
+  }
 
+  function rememberEntryChoice(value) {
     try {
-      localStorage.setItem(siteEntryKey, acceptedValue);
+      localStorage.setItem(siteEntryKey, value);
     } catch (error) {
       console.warn('Não foi possível salvar a escolha:', error);
     }
+  }
 
+  function acceptSiteEntry() {
+    if (notice) notice.textContent = '';
+    if (!activateInterfaceAfterNotice()) return;
+
+    rememberEntryChoice(acceptedValue);
     hideSiteEntry();
   }
 
@@ -1436,7 +1444,11 @@
     void siteEntryOverlay.offsetWidth;
     siteEntryOverlay.classList.add('declined');
     typeDialogue(declinedDialogue, {
-      onComplete: () => acceptButton?.focus()
+      onComplete: () => {
+        if (!activateInterfaceAfterNotice()) return;
+        rememberEntryChoice(essentialValue);
+        hideSiteEntry();
+      }
     });
   }
 
@@ -1462,7 +1474,7 @@
 
   let alreadyAccepted = false;
   try {
-    alreadyAccepted = localStorage.getItem(siteEntryKey) === acceptedValue;
+    alreadyAccepted = [acceptedValue, essentialValue].includes(localStorage.getItem(siteEntryKey));
   } catch (error) {
     alreadyAccepted = false;
   }
