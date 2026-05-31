@@ -1538,7 +1538,12 @@
 <script>
 (function () {
   const siteEntryKey = 'wffukuta_site_entry_v1';
+  const flowProgressKey = 'wffukuta_temporal_flow_v1';
   const acceptedValue = 'accepted';
+  const completedValue = 'completed';
+  const progressDbName = 'wffukuta_progress_v1';
+  const progressStoreName = 'progress';
+  const threeDaysMs = 3 * 24 * 60 * 60 * 1000;
   const siteEntryOverlay = document.getElementById('site-entry');
   const acceptButton = document.getElementById('site-entry-accept');
   const declineButton = document.getElementById('site-entry-decline');
@@ -1554,6 +1559,141 @@
   const dialogueStartDelayMs = 760;
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   let typewriterTimerId = null;
+  let progressDbPromise = null;
+
+  function openProgressDatabase() {
+    if (!('indexedDB' in window)) {
+      return Promise.resolve(null);
+    }
+
+    if (!progressDbPromise) {
+      progressDbPromise = new Promise(resolve => {
+        const request = indexedDB.open(progressDbName, 1);
+
+        request.onupgradeneeded = () => {
+          const db = request.result;
+
+          if (!db.objectStoreNames.contains(progressStoreName)) {
+            db.createObjectStore(progressStoreName, { keyPath: 'key' });
+          }
+        };
+
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => {
+          console.warn('Não foi possível abrir o IndexedDB de progresso:', request.error);
+          resolve(null);
+        };
+        request.onblocked = () => {
+          console.warn('IndexedDB de progresso bloqueado por outra aba.');
+          resolve(null);
+        };
+      });
+    }
+
+    return progressDbPromise;
+  }
+
+  async function readProgressRecord(key) {
+    const db = await openProgressDatabase();
+    if (!db) return null;
+
+    return new Promise(resolve => {
+      const transaction = db.transaction(progressStoreName, 'readonly');
+      const request = transaction.objectStore(progressStoreName).get(key);
+
+      request.onsuccess = () => resolve(request.result || null);
+      request.onerror = () => {
+        console.warn(`Não foi possível ler ${key} no IndexedDB:`, request.error);
+        resolve(null);
+      };
+    });
+  }
+
+  async function writeProgressRecord(key, value, extra = {}) {
+    const db = await openProgressDatabase();
+    if (!db) return false;
+
+    return new Promise(resolve => {
+      const transaction = db.transaction(progressStoreName, 'readwrite');
+      const record = {
+        key,
+        value,
+        savedAt: Date.now(),
+        ...extra
+      };
+      const request = transaction.objectStore(progressStoreName).put(record);
+
+      request.onsuccess = () => resolve(true);
+      request.onerror = () => {
+        console.warn(`Não foi possível salvar ${key} no IndexedDB:`, request.error);
+        resolve(false);
+      };
+    });
+  }
+
+  async function deleteProgressRecord(key) {
+    const db = await openProgressDatabase();
+    if (!db) return false;
+
+    return new Promise(resolve => {
+      const transaction = db.transaction(progressStoreName, 'readwrite');
+      const request = transaction.objectStore(progressStoreName).delete(key);
+
+      request.onsuccess = () => resolve(true);
+      request.onerror = () => {
+        console.warn(`Não foi possível limpar ${key} no IndexedDB:`, request.error);
+        resolve(false);
+      };
+    });
+  }
+
+  function isRecordExpired(record, maxAgeMs) {
+    return !record?.savedAt || Date.now() - record.savedAt >= maxAgeMs;
+  }
+
+  async function hasAcceptedEntryChoice() {
+    const indexedChoice = await readProgressRecord(siteEntryKey);
+
+    if (indexedChoice?.value === acceptedValue) {
+      return true;
+    }
+
+    try {
+      if (localStorage.getItem(siteEntryKey) === acceptedValue) {
+        await writeProgressRecord(siteEntryKey, acceptedValue, { migratedFrom: 'localStorage' });
+        return true;
+      }
+    } catch (error) {
+      console.warn('Não foi possível migrar a escolha salva anteriormente:', error);
+    }
+
+    return false;
+  }
+
+  async function getFlowStatus() {
+    const flowRecord = await readProgressRecord(flowProgressKey);
+
+    if (flowRecord?.value !== completedValue) {
+      return { completed: false, expired: false, savedAt: null };
+    }
+
+    if (isRecordExpired(flowRecord, threeDaysMs)) {
+      await deleteProgressRecord(flowProgressKey);
+      return { completed: false, expired: true, savedAt: flowRecord.savedAt };
+    }
+
+    return { completed: true, expired: false, savedAt: flowRecord.savedAt };
+  }
+
+  window.wffTemporalProgress = {
+    consentKey: siteEntryKey,
+    flowKey: flowProgressKey,
+    expiresInMs: threeDaysMs,
+    markConsentAccepted: () => writeProgressRecord(siteEntryKey, acceptedValue),
+    markFlowCompleted: () => writeProgressRecord(flowProgressKey, completedValue),
+    getFlowStatus,
+    resetFlow: () => deleteProgressRecord(flowProgressKey)
+  };
 
   function loadApprovedStyles() {
     if (document.getElementById('approved-fonts')) return;
@@ -1720,11 +1860,15 @@
     }
   }
 
-  function rememberEntryChoice(value) {
-    try {
-      localStorage.setItem(siteEntryKey, value);
-    } catch (error) {
-      console.warn('Não foi possível salvar a escolha:', error);
+  async function rememberEntryChoice(value) {
+    const indexedDbSaved = await writeProgressRecord(siteEntryKey, value);
+
+    if (!indexedDbSaved) {
+      try {
+        localStorage.setItem(siteEntryKey, value);
+      } catch (error) {
+        console.warn('Não foi possível salvar a escolha:', error);
+      }
     }
   }
 
@@ -1779,13 +1923,6 @@
     }
   });
 
-  let alreadyAccepted = false;
-  try {
-    alreadyAccepted = localStorage.getItem(siteEntryKey) === acceptedValue;
-  } catch (error) {
-    alreadyAccepted = false;
-  }
-
   function activateSiteScriptsWhenReady() {
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', activateInterfaceAfterNotice, { once: true });
@@ -1795,11 +1932,14 @@
     activateInterfaceAfterNotice();
   }
 
-  if (alreadyAccepted) {
-    activateSiteScriptsWhenReady();
-  } else {
+  hasAcceptedEntryChoice().then(alreadyAccepted => {
+    if (alreadyAccepted) {
+      activateSiteScriptsWhenReady();
+      return;
+    }
+
     showSiteEntry();
-  }
+  });
 })();
 </script>
 
@@ -2847,12 +2987,56 @@ const projectPromptInput = document.getElementById('project-prompt-input');
 const projectPromptStatus = document.getElementById('project-prompt-status');
 const btnModos = document.getElementById('modo-toggle');
 const btnModosIcon = document.getElementById('modo-toggle-icon');
+const progressApi = window.wffTemporalProgress;
 
 let promptVisible = false;
 let aguardandoToqueParaPrompt = false;
+let fluxoProjetoConcluido = false;
+
+function ocultarControleDeFluxoConcluido() {
+  if (typeof disableModoAutoControl === 'function') {
+    disableModoAutoControl();
+  }
+
+  if (!btnModos) return;
+
+  btnModos.classList.remove('awaiting-project-prompt');
+  btnModos.style.pointerEvents = 'none';
+  btnModos.style.opacity = '0';
+  btnModos.setAttribute('aria-hidden', 'true');
+  btnModos.setAttribute('hidden', 'true');
+  btnModos.setAttribute('title', 'Fluxo concluído recentemente');
+}
+
+async function sincronizarFluxoProjetoSalvo() {
+  if (!progressApi?.getFlowStatus) return;
+
+  try {
+    const flowStatus = await progressApi.getFlowStatus();
+
+    if (!flowStatus.completed) return;
+
+    fluxoProjetoConcluido = true;
+    ocultarControleDeFluxoConcluido();
+  } catch (error) {
+    console.warn('Não foi possível verificar o progresso salvo no IndexedDB:', error);
+  }
+}
+
+async function salvarConclusaoFluxoProjeto() {
+  fluxoProjetoConcluido = true;
+
+  try {
+    await progressApi?.markFlowCompleted?.();
+  } catch (error) {
+    console.warn('Não foi possível salvar a conclusão do fluxo no IndexedDB:', error);
+  }
+
+  ocultarControleDeFluxoConcluido();
+}
 
 function prepararDisparoPromptProjeto() {
-  if (!btnModos || promptVisible || aguardandoToqueParaPrompt) return;
+  if (!btnModos || fluxoProjetoConcluido || promptVisible || aguardandoToqueParaPrompt) return;
 
   disableModoAutoControl();
   aguardandoToqueParaPrompt = true;
@@ -2869,7 +3053,7 @@ function prepararDisparoPromptProjeto() {
 }
 
 function dispararPromptProjeto() {
-  if (promptVisible || !promptOverlay) return;
+  if (fluxoProjetoConcluido || promptVisible || !promptOverlay) return;
 
   promptOverlay.classList.add('visible');
   promptOverlay.setAttribute('aria-hidden', 'false');
@@ -2933,11 +3117,13 @@ btnTenho?.addEventListener('click', () => {
   projectPromptInput?.focus();
 });
 
-btnNao?.addEventListener('click', () => {
+btnNao?.addEventListener('click', async () => {
+  await salvarConclusaoFluxoProjeto();
   encerrarFluxoProjeto();
 });
 
 window.addEventListener('modo:all-sources-completed', () => {
+  if (fluxoProjetoConcluido) return;
   prepararDisparoPromptProjeto();
 });
 
@@ -2945,6 +3131,8 @@ btnModos?.addEventListener('click', () => {
   if (!aguardandoToqueParaPrompt) return;
   dispararPromptProjeto();
 });
+
+sincronizarFluxoProjetoSalvo();
 
 let messagesRef = null;
 let stopListeningMessages = null;
@@ -3082,6 +3270,8 @@ projectForm?.addEventListener('submit', async e => {
     console.error('Erro Firebase:', error);
     projectPromptStatus.textContent = 'Erro de rede, mas vamos prosseguir...';
   }
+
+  await salvarConclusaoFluxoProjeto();
 
   setTimeout(() => {
     if (btn) btn.disabled = false;
