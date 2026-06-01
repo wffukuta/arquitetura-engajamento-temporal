@@ -2672,18 +2672,8 @@ function runModoGlitchTransition(duration = 520) {
   });
 }
 
-async function loadModoScripts() {
-  if (modoControlDisabled) return null;
-
-  await ensureModoProgressReady();
-  const selection = chooseRandomModoSource();
-  const { source, completedRound } = selection;
-  if (!source) {
-    if (completedRound) {
-      window.dispatchEvent(new CustomEvent('modo:all-sources-completed'));
-    }
-    return null;
-  }
+async function loadModoPayloadFromSource(source, completedRound = false) {
+  if (!source || !modoSources.includes(source)) return null;
 
   const response = await fetch(source, { cache: 'no-store' });
   if (!response.ok) {
@@ -2700,15 +2690,36 @@ async function loadModoScripts() {
   return { source, scripts, completedRound };
 }
 
-function applyModoPayload(payload) {
-  if (!payload || modoControlDisabled) return;
+async function loadModoScripts() {
+  if (modoControlDisabled) return null;
+
+  await ensureModoProgressReady();
+  const selection = chooseRandomModoSource();
+  const { source, completedRound } = selection;
+  if (!source) {
+    if (completedRound) {
+      window.dispatchEvent(new CustomEvent('modo:all-sources-completed'));
+    }
+    return null;
+  }
+
+  return loadModoPayloadFromSource(source, completedRound);
+}
+
+function applyModoPayload(payload, options = {}) {
+  if (!payload || (modoControlDisabled && !options.hydrate)) return;
 
   const { source, scripts } = payload;
+  const shouldHydrateCompletedFlow = Boolean(options.hydrate);
 
-  pendingModoCompletionSource = source;
+  if (!shouldHydrateCompletedFlow) {
+    pendingModoCompletionSource = source;
+  }
   window.wffActiveModoSource = source;
 
-  clearModoScripts();
+  if (!shouldHydrateCompletedFlow) {
+    clearModoScripts();
+  }
 
   for (const originalScript of scripts) {
     const script = document.createElement('script');
@@ -2726,13 +2737,17 @@ function applyModoPayload(payload) {
   }
 
   lastModoSource = source;
-  window.wffTrackAetEvent?.('aet_modo_applied', {
+  window.wffTrackAetEvent?.(shouldHydrateCompletedFlow ? 'aet_modo_hydrated' : 'aet_modo_applied', {
     aet_stage: 'retencao_temporal',
-    aet_step: 'modo_visual_aplicado',
+    aet_step: shouldHydrateCompletedFlow ? 'modo_visual_restaurado' : 'modo_visual_aplicado',
     modo_source: source
   });
   if (isFirstModoCyclePending) {
     isFirstModoCyclePending = false;
+  }
+
+  if (shouldHydrateCompletedFlow) {
+    return;
   }
 
   if (modoCompletionFallbackTimer) {
@@ -2742,6 +2757,34 @@ function applyModoPayload(payload) {
     completeModoFlow(source, { fallback: true });
   }, modoFlowCompletionFallbackMs);
 }
+
+async function hydrateCompletedModoContent(sources = modoSources) {
+  const uniqueSources = [...new Set(sources)].filter(source => modoSources.includes(source));
+  if (!uniqueSources.length) return false;
+
+  await ensureModoProgressReady();
+  let hydratedCount = 0;
+
+  window.wffHydratingCompletedFlow = true;
+
+  try {
+    for (const source of uniqueSources) {
+      try {
+        const payload = await loadModoPayloadFromSource(source);
+        applyModoPayload(payload, { hydrate: true });
+        hydratedCount += 1;
+      } catch (error) {
+        console.warn(`Não foi possível restaurar o conteúdo do modo ${source}:`, error);
+      }
+    }
+  } finally {
+    window.wffHydratingCompletedFlow = false;
+  }
+
+  return hydratedCount > 0;
+}
+
+window.wffHydrateCompletedModoContent = hydrateCompletedModoContent;
 
 function preloadNextModoScripts() {
   if (modoControlDisabled || !modoAutoEnabled || isModoLoading || preloadModoPromise || preloadedModoPayload) {
@@ -3265,6 +3308,13 @@ async function sincronizarFluxoProjetoSalvo() {
         aet_stage: 'retencao_temporal',
         aet_step: 'fluxo_ja_concluido'
       });
+
+      try {
+        await window.wffHydrateCompletedModoContent?.(window.wffModoSources || []);
+      } catch (error) {
+        console.warn('Não foi possível restaurar os conteúdos dos modos concluídos:', error);
+      }
+
       ocultarControleDeFluxoConcluido();
       return;
     }
