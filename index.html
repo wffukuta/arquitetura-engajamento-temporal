@@ -1584,6 +1584,7 @@
 (function () {
   const siteEntryKey = 'wffukuta_site_entry_v1';
   const flowProgressKey = 'wffukuta_temporal_flow_v1';
+  const modoProgressKey = 'wffukuta_completed_modos_v1';
   const acceptedValue = 'accepted';
   const completedValue = 'completed';
   const progressDbName = 'wffukuta_progress_v1';
@@ -1724,20 +1725,45 @@
 
     if (isRecordExpired(flowRecord, threeDaysMs)) {
       await deleteProgressRecord(flowProgressKey);
+      await deleteProgressRecord(modoProgressKey);
       return { completed: false, expired: true, savedAt: flowRecord.savedAt };
     }
 
     return { completed: true, expired: false, savedAt: flowRecord.savedAt };
   }
 
+  async function getCompletedModoSources() {
+    const modoRecord = await readProgressRecord(modoProgressKey);
+    return Array.isArray(modoRecord?.sources) ? modoRecord.sources : [];
+  }
+
+  async function markModoCompleted(source) {
+    if (!source) return false;
+
+    const sources = new Set(await getCompletedModoSources());
+    sources.add(source);
+    return writeProgressRecord(modoProgressKey, completedValue, { sources: [...sources] });
+  }
+
+  async function resetModoProgress() {
+    return deleteProgressRecord(modoProgressKey);
+  }
+
   window.wffTemporalProgress = {
     consentKey: siteEntryKey,
     flowKey: flowProgressKey,
+    modoKey: modoProgressKey,
     expiresInMs: threeDaysMs,
     markConsentAccepted: () => writeProgressRecord(siteEntryKey, acceptedValue),
     markFlowCompleted: () => writeProgressRecord(flowProgressKey, completedValue),
+    markModoCompleted,
     getFlowStatus,
-    resetFlow: () => deleteProgressRecord(flowProgressKey)
+    getCompletedModoSources,
+    resetFlow: async () => {
+      await resetModoProgress();
+      return deleteProgressRecord(flowProgressKey);
+    },
+    resetModoProgress
   };
 
   function loadApprovedStyles() {
@@ -2184,12 +2210,17 @@ let preloadedModoPayload = null;
 let preloadModoPromise = null;
 const activeModoScripts = [];
 let unusedModoSources = [];
+let completedModoSources = new Set();
+let pendingModoCompletionSource = '';
+let modoProgressReadyPromise = null;
+let modoCompletionFallbackTimer = null;
 let modoControlDisabled = false;
 let modoPausedByVisibility = false;
 let isFirstModoCyclePending = true;
 const firstModoSource = './modo/flores.html';
-const recurringModoSources = modoSources.filter(source => source !== firstModoSource);
+const modoFlowCompletionFallbackMs = 45000;
 const firstModoDelayMs = 10 * 1000;
+window.wffModoSources = modoSources;
 
 const modoToggleButton = document.getElementById('modo-toggle');
 const modoToggleIcon = document.getElementById('modo-toggle-icon');
@@ -2386,6 +2417,11 @@ function disableModoAutoControl() {
   clearModoTimer();
   preloadedModoPayload = null;
   preloadModoPromise = null;
+  pendingModoCompletionSource = '';
+  if (modoCompletionFallbackTimer) {
+    clearTimeout(modoCompletionFallbackTimer);
+    modoCompletionFallbackTimer = null;
+  }
   modoRemainingTime = 0;
   modoTimerDuration = 0;
   modoExpectedEnd = 0;
@@ -2512,16 +2548,49 @@ function scheduleNextModoLoad() {
   preloadNextModoScripts();
 }
 
-function chooseRandomModoSource() {
-  if (!modoSources.length) {
-    return { source: '', completedRound: false };
+function getIncompleteModoSources() {
+  return modoSources.filter(source => !completedModoSources.has(source));
+}
+
+function hasCompletedAllModoSources() {
+  return modoSources.length > 0 && modoSources.every(source => completedModoSources.has(source));
+}
+
+async function syncModoProgress() {
+  if (!window.wffTemporalProgress?.getCompletedModoSources) return;
+
+  try {
+    const savedSources = await window.wffTemporalProgress.getCompletedModoSources();
+    completedModoSources = new Set(savedSources.filter(source => modoSources.includes(source)));
+  } catch (error) {
+    console.warn('Não foi possível sincronizar o progresso dos modos:', error);
+  }
+}
+
+function ensureModoProgressReady() {
+  if (!modoProgressReadyPromise) {
+    modoProgressReadyPromise = syncModoProgress();
   }
 
-  if (isFirstModoCyclePending && modoSources.includes(firstModoSource)) {
+  return modoProgressReadyPromise;
+}
+
+function chooseRandomModoSource() {
+  if (!modoSources.length || hasCompletedAllModoSources()) {
+    return { source: '', completedRound: hasCompletedAllModoSources() };
+  }
+
+  if (isFirstModoCyclePending && modoSources.includes(firstModoSource) && !completedModoSources.has(firstModoSource)) {
     return { source: firstModoSource, completedRound: false };
   }
 
-  const sourcesPool = recurringModoSources.length ? recurringModoSources : modoSources;
+  let availableSources = getIncompleteModoSources();
+
+  if (isFirstModoCyclePending && availableSources.includes(firstModoSource)) {
+    availableSources = availableSources.filter(source => source !== firstModoSource);
+  }
+
+  const sourcesPool = availableSources.length ? availableSources : getIncompleteModoSources();
 
   if (!unusedModoSources.length) {
     unusedModoSources = [...sourcesPool].sort(() => Math.random() - 0.5);
@@ -2530,12 +2599,60 @@ function chooseRandomModoSource() {
       const moved = unusedModoSources.shift();
       unusedModoSources.push(moved);
     }
+  } else {
+    unusedModoSources = unusedModoSources.filter(source => !completedModoSources.has(source));
   }
 
-  const source = unusedModoSources.shift() || '';
-  const completedRound = unusedModoSources.length === 0;
-  return { source, completedRound };
+  const source = unusedModoSources.shift() || sourcesPool[0] || '';
+  return { source, completedRound: false };
 }
+
+async function completeModoFlow(source, options = {}) {
+  const sourceToComplete = source || pendingModoCompletionSource;
+  if (!sourceToComplete || !modoSources.includes(sourceToComplete) || completedModoSources.has(sourceToComplete)) {
+    return;
+  }
+
+  if (modoCompletionFallbackTimer) {
+    clearTimeout(modoCompletionFallbackTimer);
+    modoCompletionFallbackTimer = null;
+  }
+
+  completedModoSources.add(sourceToComplete);
+  unusedModoSources = unusedModoSources.filter(candidate => candidate !== sourceToComplete);
+
+  try {
+    await window.wffTemporalProgress?.markModoCompleted?.(sourceToComplete);
+  } catch (error) {
+    console.warn('Não foi possível salvar a conclusão do modo:', error);
+  }
+
+  window.wffTrackAetEvent?.('aet_modo_flow_completed', {
+    aet_stage: 'retencao_temporal',
+    aet_step: options.fallback ? 'modo_fluxo_concluido_por_tempo' : 'modo_fluxo_concluido',
+    modo_source: sourceToComplete
+  });
+
+  if (sourceToComplete === pendingModoCompletionSource) {
+    pendingModoCompletionSource = '';
+  }
+
+  if (hasCompletedAllModoSources()) {
+    window.wffTrackAetEvent?.('aet_modo_round_completed', {
+      aet_stage: 'retencao_temporal',
+      aet_step: 'todos_modos_exibidos'
+    });
+    window.dispatchEvent(new CustomEvent('modo:all-sources-completed'));
+    return;
+  }
+
+  if (modoAutoEnabled && !modoControlDisabled) {
+    scheduleNextModoLoad();
+  }
+}
+
+window.wffCompleteModoFlow = source => completeModoFlow(source);
+
 
 function runModoGlitchTransition(duration = 520) {
   if (!glitchTransition) return Promise.resolve();
@@ -2558,9 +2675,15 @@ function runModoGlitchTransition(duration = 520) {
 async function loadModoScripts() {
   if (modoControlDisabled) return null;
 
+  await ensureModoProgressReady();
   const selection = chooseRandomModoSource();
   const { source, completedRound } = selection;
-  if (!source) return null;
+  if (!source) {
+    if (completedRound) {
+      window.dispatchEvent(new CustomEvent('modo:all-sources-completed'));
+    }
+    return null;
+  }
 
   const response = await fetch(source, { cache: 'no-store' });
   if (!response.ok) {
@@ -2580,7 +2703,10 @@ async function loadModoScripts() {
 function applyModoPayload(payload) {
   if (!payload || modoControlDisabled) return;
 
-  const { source, scripts, completedRound } = payload;
+  const { source, scripts } = payload;
+
+  pendingModoCompletionSource = source;
+  window.wffActiveModoSource = source;
 
   clearModoScripts();
 
@@ -2609,13 +2735,12 @@ function applyModoPayload(payload) {
     isFirstModoCyclePending = false;
   }
 
-  if (completedRound) {
-    window.wffTrackAetEvent?.('aet_modo_round_completed', {
-      aet_stage: 'retencao_temporal',
-      aet_step: 'todos_modos_exibidos'
-    });
-    window.dispatchEvent(new CustomEvent('modo:all-sources-completed'));
+  if (modoCompletionFallbackTimer) {
+    clearTimeout(modoCompletionFallbackTimer);
   }
+  modoCompletionFallbackTimer = setTimeout(() => {
+    completeModoFlow(source, { fallback: true });
+  }, modoFlowCompletionFallbackMs);
 }
 
 function preloadNextModoScripts() {
@@ -2662,6 +2787,10 @@ async function runModoCycle() {
       return;
     }
 
+    if (!payload) {
+      return;
+    }
+
     playModoTickSound();
     await runModoGlitchTransition();
 
@@ -2672,15 +2801,16 @@ async function runModoCycle() {
     applyModoPayload(payload);
   } catch (error) {
     console.error('Erro ao carregar modo aleatório:', error);
+    scheduleNextModoLoad();
   } finally {
     isModoLoading = false;
-    scheduleNextModoLoad();
   }
 }
 
 window.addEventListener('load', () => {
   setModoToggleVisual(0, '▶');
   buildTimeFreezePhraseLetters();
+  ensureModoProgressReady();
 });
 
 modoToggleButton.addEventListener('click', async () => {
@@ -3129,14 +3259,28 @@ async function sincronizarFluxoProjetoSalvo() {
   try {
     const flowStatus = await progressApi.getFlowStatus();
 
-    if (!flowStatus.completed) return;
+    if (flowStatus.completed) {
+      fluxoProjetoConcluido = true;
+      window.wffTrackAetEvent?.('aet_project_flow_cached', {
+        aet_stage: 'retencao_temporal',
+        aet_step: 'fluxo_ja_concluido'
+      });
+      ocultarControleDeFluxoConcluido();
+      return;
+    }
 
-    fluxoProjetoConcluido = true;
-    window.wffTrackAetEvent?.('aet_project_flow_cached', {
-      aet_stage: 'retencao_temporal',
-      aet_step: 'fluxo_ja_concluido'
-    });
-    ocultarControleDeFluxoConcluido();
+    const completedModoSources = await progressApi.getCompletedModoSources?.();
+    const allModoSources = window.wffModoSources || [];
+    const completedAllModes = allModoSources.length > 0
+      && allModoSources.every(source => completedModoSources?.includes(source));
+
+    if (completedAllModes) {
+      window.wffTrackAetEvent?.('aet_project_prompt_cached', {
+        aet_stage: 'retencao_temporal',
+        aet_step: 'modos_ja_concluidos'
+      });
+      prepararDisparoPromptProjeto();
+    }
   } catch (error) {
     console.warn('Não foi possível verificar o progresso salvo no IndexedDB:', error);
   }

@@ -147,6 +147,8 @@
         currentIdx++;
         if (currentIdx < etapas.length) {
             setTimeout(renderNext, 8000); // Reduzi para 8s para ser levemente mais dinâmico
+        } else {
+            setTimeout(() => window.wffCompleteModoFlow?.('./modo/entropia.html'), 900);
         }
     }
 

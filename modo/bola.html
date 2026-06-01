@@ -243,7 +243,8 @@
     splatter.classList.add('retract');
 
     // Inicia a animação nos cards
-    document.querySelectorAll('.card').forEach((card, index) => {
+    const cards = document.querySelectorAll('.card');
+    cards.forEach((card, index) => {
       const custoPlanilha = card.dataset.custos || '';
       const [criacao, publicacao, manutencao] = parseCostBreakdown(custoPlanilha);
 
@@ -271,9 +272,12 @@
     });
 
     // Finaliza e limpa tudo
+    const revealDuration = 200 + (Math.max(0, cards.length - 1) * 150) + 650;
+
     setTimeout(() => {
+      window.wffCompleteModoFlow?.('./modo/bola.html');
       cleanupAnimationArtifacts();
-    }, 1500);
+    }, Math.max(1500, revealDuration));
   };
 
   updatePhysics();

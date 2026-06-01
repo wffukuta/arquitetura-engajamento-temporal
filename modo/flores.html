@@ -31,12 +31,20 @@
     let animationStarted = false;
     let releaseTriggered = false;
     let releaseStartTime = 0;
+    let completionTimerId = null;
 
     function startAnimation() {
         if (animationStarted) return;
         animationStarted = true;
         startTime = Date.now();
         playBloomSound();
+
+        if (completionTimerId) {
+            clearTimeout(completionTimerId);
+        }
+        completionTimerId = setTimeout(() => {
+            window.wffCompleteModoFlow?.('./modo/flores.html');
+        }, DURATION_MS);
     }
 
     function playBloomSound() {
