@@ -4,6 +4,51 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>W.F.Fukuta | Projetos</title>
+  <script type="text/plain" data-site-script>
+(function () {
+  const measurementId = 'G-H88XGNCFVE';
+
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = window.gtag || function gtag(){
+    window.dataLayer.push(arguments);
+  };
+
+  function sanitizeAnalyticsParams(params = {}) {
+    return Object.fromEntries(
+      Object.entries(params).filter(([, value]) => value !== undefined && value !== null && value !== '')
+    );
+  }
+
+  window.wffTrackAetEvent = function wffTrackAetEvent(eventName, params = {}) {
+    if (typeof window.gtag !== 'function') return;
+
+    window.gtag('event', eventName, sanitizeAnalyticsParams({
+      event_category: 'AET',
+      engagement_framework: 'arquitetura_engajamento_temporal',
+      page_path: window.location.pathname,
+      ...params
+    }));
+  };
+
+  const googleTag = document.createElement('script');
+  googleTag.async = true;
+  googleTag.src = `https://www.googletagmanager.com/gtag/js?id=${measurementId}`;
+  document.head.appendChild(googleTag);
+
+  window.gtag('js', new Date());
+  window.gtag('config', measurementId, { send_page_view: false });
+  window.gtag('event', 'page_view', {
+    page_title: document.title,
+    page_location: window.location.href,
+    page_path: window.location.pathname
+  });
+
+  window.wffTrackAetEvent('aet_site_activated', {
+    aet_stage: 'consentimento',
+    aet_step: 'interface_ativada'
+  });
+})();
+  </script>
 
   <style>
     :root {
@@ -1523,11 +1568,11 @@
   <div class="terms-modal__body">
     <p><strong>Resumo de uso:</strong> este site usa recursos essenciais para funcionar e, somente após sua confirmação em <strong>Aceito</strong>, ativa experiências interativas como animações, áudio, chat de contato, carregamento de projetos e preferências locais.</p>
     <ul>
-      <li><strong>Dados tratados:</strong> preferências salvas no navegador, dados técnicos básicos de navegação e mensagens enviadas voluntariamente no chat ou formulários.</li>
-      <li><strong>Finalidade:</strong> liberar a navegação, melhorar estabilidade, responder contatos e demonstrar recursos de engajamento temporal.</li>
+      <li><strong>Dados tratados:</strong> preferências salvas no navegador, eventos de navegação enviados ao Google Analytics, dados técnicos básicos de navegação e mensagens enviadas voluntariamente no chat ou formulários.</li>
+      <li><strong>Finalidade:</strong> liberar a navegação, medir etapas de retenção conforme os princípios da AET, melhorar estabilidade, responder contatos e demonstrar recursos de engajamento temporal.</li>
       <li><strong>Base LGPD:</strong> consentimento do titular e execução de funcionalidades solicitadas pelo usuário, conforme aplicável.</li>
       <li><strong>Biscoitos/cookies:</strong> podem guardar sua escolha de entrada e preferências locais para evitar solicitar a mesma confirmação repetidamente.</li>
-      <li><strong>Compartilhamento:</strong> dados podem passar por serviços necessários ao funcionamento, como autenticação, hospedagem, e-mail ou vídeo incorporado.</li>
+      <li><strong>Compartilhamento:</strong> dados podem passar por serviços necessários ao funcionamento, como Google Analytics, autenticação, hospedagem, e-mail ou vídeo incorporado.</li>
       <li><strong>Seus direitos:</strong> você pode solicitar confirmação de tratamento, acesso, correção, exclusão, portabilidade, informação sobre compartilhamento e revogação do consentimento.</li>
     </ul>
     <p>Ao tocar em <strong>Aceito</strong>, você declara ciência destes termos e autoriza a ativação dos recursos do site. Caso não concorde, feche esta página ou não prossiga.</p>
@@ -1876,6 +1921,10 @@
     if (notice) notice.textContent = '';
     if (!activateInterfaceAfterNotice()) return;
 
+    window.wffTrackAetEvent?.('aet_consent_accepted', {
+      aet_stage: 'consentimento',
+      aet_step: 'termos_aceitos'
+    });
     rememberEntryChoice(acceptedValue);
     hideSiteEntry();
   }
@@ -2387,6 +2436,12 @@ function startModoTimer(durationMs) {
 function pauseModoTimer() {
   if (!modoAutoEnabled) return;
 
+  window.wffTrackAetEvent?.('aet_modo_paused', {
+    aet_stage: 'retencao_temporal',
+    aet_step: 'controle_pausado',
+    remaining_ms: Math.round(Math.max(0, modoExpectedEnd - performance.now()))
+  });
+
   modoRemainingTime = Math.max(0, modoExpectedEnd - performance.now());
   modoAutoEnabled = false;
   clearModoTimer();
@@ -2398,6 +2453,10 @@ function pauseModoTimer() {
 function resumeModoTimer() {
   if (modoControlDisabled) return;
 
+  window.wffTrackAetEvent?.('aet_modo_resumed', {
+    aet_stage: 'retencao_temporal',
+    aet_step: isFirstModoCyclePending ? 'primeiro_ciclo_iniciado' : 'ciclo_retomado'
+  });
   modoAutoEnabled = true;
   syncConstitutionalBackgroundAudio(true);
   const duration = modoRemainingTime > 0
@@ -2541,11 +2600,20 @@ function applyModoPayload(payload) {
   }
 
   lastModoSource = source;
+  window.wffTrackAetEvent?.('aet_modo_applied', {
+    aet_stage: 'retencao_temporal',
+    aet_step: 'modo_visual_aplicado',
+    modo_source: source
+  });
   if (isFirstModoCyclePending) {
     isFirstModoCyclePending = false;
   }
 
   if (completedRound) {
+    window.wffTrackAetEvent?.('aet_modo_round_completed', {
+      aet_stage: 'retencao_temporal',
+      aet_step: 'todos_modos_exibidos'
+    });
     window.dispatchEvent(new CustomEvent('modo:all-sources-completed'));
   }
 }
@@ -2622,6 +2690,10 @@ modoToggleButton.addEventListener('click', async () => {
   modoPausedByVisibility = false;
 
   if (modoAutoEnabled) {
+    window.wffTrackAetEvent?.('aet_freeze_requested', {
+      aet_stage: 'retencao_temporal',
+      aet_step: 'usuario_congelou_tempo'
+    });
     pauseModoTimer();
     await showTimeFreezeOverlay();
     return;
@@ -2740,6 +2812,12 @@ function openVideoEmbed(url) {
 }
 
 function closeVideoEmbed() {
+  if (videoModal.classList.contains('open') || videoFrame.src) {
+    window.wffTrackAetEvent?.('aet_project_video_close', {
+      aet_stage: 'exploracao',
+      aet_step: 'video_projeto_fechado'
+    });
+  }
   videoModal.classList.remove('open');
   videoModal.setAttribute('aria-hidden', 'true');
   videoModal.hidden = true;
@@ -2845,10 +2923,21 @@ fetch(sheetURL, { signal: sheetController.signal })
     if (linhas.length <= 1) {
       container.innerHTML = '<div class="status-msg">Nenhum projeto encontrado na planilha.</div>';
       container.classList.add('grid--loaded');
+      window.wffTrackAetEvent?.('aet_projects_loaded', {
+        aet_stage: 'exploracao',
+        aet_step: 'lista_projetos_carregada',
+        project_count: 0
+      });
       return;
     }
 
     linhas.shift(); // Remove o cabeçalho
+
+    window.wffTrackAetEvent?.('aet_projects_loaded', {
+      aet_stage: 'exploracao',
+      aet_step: 'lista_projetos_carregada',
+      project_count: linhas.length
+    });
 
     linhas.forEach((linha, index) => {
       const colunas = linha.split('\t');
@@ -2866,13 +2955,13 @@ fetch(sheetURL, { signal: sheetController.signal })
       const custos = (colunas[9] || '').trim();
       const licencaAberta = licenca === 'ABERTO' || licenca === 'ABERTA';
       const botaoLink = linkProducao
-        ? `<a class="project-link" href="${linkProducao}" target="_blank" rel="noopener noreferrer">Acessar projeto</a>`
+        ? `<a class="project-link" href="${linkProducao}" target="_blank" rel="noopener noreferrer" data-project-name="${projeto.replace(/"/g, '&quot;')}">Acessar projeto</a>`
         : '';
       const botaoVideo = youtubeLink
         ? `<button class="icon-link video-link" type="button" data-youtube="${youtubeLink.replace(/"/g, '&quot;')}" aria-label="Abrir vídeo no player"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21.58 7.19a2.91 2.91 0 0 0-2.05-2.06C17.68 4.63 12 4.63 12 4.63s-5.68 0-7.53.5A2.91 2.91 0 0 0 2.42 7.2 30.4 30.4 0 0 0 2 12a30.4 30.4 0 0 0 .42 4.8 2.91 2.91 0 0 0 2.05 2.06c1.85.5 7.53.5 7.53.5s5.68 0 7.53-.5a2.91 2.91 0 0 0 2.05-2.06A30.4 30.4 0 0 0 22 12a30.4 30.4 0 0 0-.42-4.81ZM10.2 15.14V8.86L15.6 12Z"/></svg></button>`
         : '';
       const botaoGithub = licencaAberta && githubLink
-        ? `<a class="icon-link github-link" href="${githubLink.replace(/"/g, '&quot;')}" target="_blank" rel="noopener noreferrer" aria-label="Abrir repositório no GitHub"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.5a10.5 10.5 0 0 0-3.32 20.46c.53.1.72-.23.72-.51v-1.94c-2.95.65-3.57-1.25-3.57-1.25-.48-1.22-1.18-1.54-1.18-1.54-.96-.66.07-.64.07-.64 1.06.08 1.62 1.09 1.62 1.09.94 1.62 2.46 1.15 3.06.88.1-.68.37-1.15.67-1.41-2.36-.27-4.84-1.18-4.84-5.27 0-1.17.42-2.12 1.1-2.86-.11-.27-.48-1.36.11-2.83 0 0 .9-.29 2.95 1.1a10.2 10.2 0 0 1 5.38 0c2.05-1.39 2.95-1.1 2.95-1.1.59 1.47.22 2.56.11 2.83.68.74 1.1 1.69 1.1 2.86 0 4.1-2.48 5-4.84 5.27.38.33.72.98.72 1.98v2.94c0 .28.19.62.73.51A10.5 10.5 0 0 0 12 1.5Z"/></svg></a>`
+        ? `<a class="icon-link github-link" href="${githubLink.replace(/"/g, '&quot;')}" target="_blank" rel="noopener noreferrer" data-project-name="${projeto.replace(/"/g, '&quot;')}" aria-label="Abrir repositório no GitHub"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.5a10.5 10.5 0 0 0-3.32 20.46c.53.1.72-.23.72-.51v-1.94c-2.95.65-3.57-1.25-3.57-1.25-.48-1.22-1.18-1.54-1.18-1.54-.96-.66.07-.64.07-.64 1.06.08 1.62 1.09 1.62 1.09.94 1.62 2.46 1.15 3.06.88.1-.68.37-1.15.67-1.41-2.36-.27-4.84-1.18-4.84-5.27 0-1.17.42-2.12 1.1-2.86-.11-.27-.48-1.36.11-2.83 0 0 .9-.29 2.95 1.1a10.2 10.2 0 0 1 5.38 0c2.05-1.39 2.95-1.1 2.95-1.1.59 1.47.22 2.56.11 2.83.68.74 1.1 1.69 1.1 2.86 0 4.1-2.48 5-4.84 5.27.38.33.72.98.72 1.98v2.94c0 .28.19.62.73.51A10.5 10.5 0 0 0 12 1.5Z"/></svg></a>`
         : '';
       const iconesAcao = botaoGithub || botaoVideo
         ? `<div class="action-icons">${botaoGithub}${botaoVideo}</div>`
@@ -2908,9 +2997,30 @@ fetch(sheetURL, { signal: sheetController.signal })
       const videoButton = card.querySelector('.video-link');
       if (videoButton) {
         videoButton.addEventListener('click', () => {
+          window.wffTrackAetEvent?.('aet_project_video_open', {
+            aet_stage: 'exploracao',
+            aet_step: 'video_projeto_aberto',
+            project_name: projeto
+          });
           openVideoEmbed(videoButton.dataset.youtube || '');
         });
       }
+
+      card.querySelector('.project-link')?.addEventListener('click', () => {
+        window.wffTrackAetEvent?.('aet_project_access_click', {
+          aet_stage: 'conversao_exploratoria',
+          aet_step: 'acesso_projeto',
+          project_name: projeto
+        });
+      });
+
+      card.querySelector('.github-link')?.addEventListener('click', () => {
+        window.wffTrackAetEvent?.('aet_project_github_click', {
+          aet_stage: 'confianca_tecnica',
+          aet_step: 'github_projeto',
+          project_name: projeto
+        });
+      });
 
       container.appendChild(card);
     });
@@ -2921,6 +3031,11 @@ fetch(sheetURL, { signal: sheetController.signal })
   })
   .catch(err => {
     window.clearTimeout(sheetTimeoutId);
+    window.wffTrackAetEvent?.('aet_projects_load_error', {
+      aet_stage: 'exploracao',
+      aet_step: 'erro_carregar_projetos',
+      error_name: err.name || 'Error'
+    });
     const message = err.name === 'AbortError'
       ? 'Tempo limite excedido ao carregar a planilha.'
       : err.message;
@@ -3017,6 +3132,10 @@ async function sincronizarFluxoProjetoSalvo() {
     if (!flowStatus.completed) return;
 
     fluxoProjetoConcluido = true;
+    window.wffTrackAetEvent?.('aet_project_flow_cached', {
+      aet_stage: 'retencao_temporal',
+      aet_step: 'fluxo_ja_concluido'
+    });
     ocultarControleDeFluxoConcluido();
   } catch (error) {
     console.warn('Não foi possível verificar o progresso salvo no IndexedDB:', error);
@@ -3024,6 +3143,10 @@ async function sincronizarFluxoProjetoSalvo() {
 }
 
 async function salvarConclusaoFluxoProjeto() {
+  window.wffTrackAetEvent?.('aet_project_flow_completed', {
+    aet_stage: 'conversao',
+    aet_step: 'fluxo_projeto_concluido'
+  });
   fluxoProjetoConcluido = true;
 
   try {
@@ -3037,6 +3160,11 @@ async function salvarConclusaoFluxoProjeto() {
 
 function prepararDisparoPromptProjeto() {
   if (!btnModos || fluxoProjetoConcluido || promptVisible || aguardandoToqueParaPrompt) return;
+
+  window.wffTrackAetEvent?.('aet_project_prompt_armed', {
+    aet_stage: 'retencao_temporal',
+    aet_step: 'prompt_projeto_preparado'
+  });
 
   disableModoAutoControl();
   aguardandoToqueParaPrompt = true;
@@ -3055,6 +3183,10 @@ function prepararDisparoPromptProjeto() {
 function dispararPromptProjeto() {
   if (fluxoProjetoConcluido || promptVisible || !promptOverlay) return;
 
+  window.wffTrackAetEvent?.('aet_project_prompt_shown', {
+    aet_stage: 'conversao',
+    aet_step: 'prompt_projeto_exibido'
+  });
   promptOverlay.classList.add('visible');
   promptOverlay.setAttribute('aria-hidden', 'false');
 
@@ -3102,6 +3234,10 @@ function encerrarFluxoProjeto() {
 }
 
 btnTenho?.addEventListener('click', () => {
+  window.wffTrackAetEvent?.('aet_project_intent_yes', {
+    aet_stage: 'conversao',
+    aet_step: 'usuario_tem_projeto'
+  });
   if (choiceContainer) {
     choiceContainer.setAttribute('hidden', 'true');
     choiceContainer.setAttribute('aria-hidden', 'true');
@@ -3118,6 +3254,10 @@ btnTenho?.addEventListener('click', () => {
 });
 
 btnNao?.addEventListener('click', async () => {
+  window.wffTrackAetEvent?.('aet_project_intent_no', {
+    aet_stage: 'conversao',
+    aet_step: 'usuario_sem_projeto'
+  });
   await salvarConclusaoFluxoProjeto();
   encerrarFluxoProjeto();
 });
@@ -3129,6 +3269,10 @@ window.addEventListener('modo:all-sources-completed', () => {
 
 btnModos?.addEventListener('click', () => {
   if (!aguardandoToqueParaPrompt) return;
+  window.wffTrackAetEvent?.('aet_project_prompt_trigger', {
+    aet_stage: 'conversao',
+    aet_step: 'usuario_disparou_prompt'
+  });
   dispararPromptProjeto();
 });
 
@@ -3169,6 +3313,10 @@ function escutarMensagens(nodeRef) {
 }
 
 function toggleChat(open) {
+  window.wffTrackAetEvent?.(open ? 'aet_chat_open' : 'aet_chat_close', {
+    aet_stage: 'contato',
+    aet_step: open ? 'chat_aberto' : 'chat_fechado'
+  });
   chatWidget.classList.toggle('open', open);
   chatToggle.setAttribute('aria-expanded', String(open));
   if (open) {
@@ -3187,9 +3335,22 @@ chatClose.addEventListener('click', () => {
 });
 
 chatLogin.addEventListener('click', async () => {
+  window.wffTrackAetEvent?.('aet_chat_login_click', {
+    aet_stage: 'contato',
+    aet_step: 'login_chat_iniciado'
+  });
   try {
     await signInWithPopup(auth, provider);
+    window.wffTrackAetEvent?.('aet_chat_login_success', {
+      aet_stage: 'contato',
+      aet_step: 'login_chat_concluido'
+    });
   } catch (error) {
+    window.wffTrackAetEvent?.('aet_chat_login_error', {
+      aet_stage: 'contato',
+      aet_step: 'login_chat_erro',
+      error_name: error.name || 'Error'
+    });
     console.error('Falha no login:', error);
   }
 });
@@ -3221,6 +3382,11 @@ chatForm.addEventListener('submit', async event => {
   const text = chatInput.value.trim();
   if (!user || !text || !messagesRef) return;
 
+  window.wffTrackAetEvent?.('aet_chat_message_submit', {
+    aet_stage: 'contato',
+    aet_step: 'mensagem_chat_enviada'
+  });
+
   await push(messagesRef, {
     author: user.displayName || user.email || 'Visitante',
     uid: user.uid,
@@ -3238,6 +3404,11 @@ projectForm?.addEventListener('submit', async e => {
   const resposta = projectPromptInput.value.trim();
   if (!resposta) return;
 
+  window.wffTrackAetEvent?.('aet_project_form_submit', {
+    aet_stage: 'conversao',
+    aet_step: 'formulario_projeto_enviado',
+    answer_length: resposta.length
+  });
   projectPromptStatus.textContent = 'Salvando...';
   const btn = e.target.querySelector('button');
   if (btn) btn.disabled = true;
@@ -3248,9 +3419,18 @@ projectForm?.addEventListener('submit', async e => {
 
     try {
       const loginResult = await signInWithPopup(auth, provider);
+      window.wffTrackAetEvent?.('aet_project_login_success', {
+        aet_stage: 'conversao',
+        aet_step: 'login_projeto_concluido'
+      });
       user = loginResult.user;
       projectPromptStatus.textContent = 'Login concluído. Enviando...';
     } catch (error) {
+      window.wffTrackAetEvent?.('aet_project_login_error', {
+        aet_stage: 'conversao',
+        aet_step: 'login_projeto_erro',
+        error_name: error.name || 'Error'
+      });
       console.error('Falha no login para envio do projeto:', error);
       projectPromptStatus.textContent = 'Não foi possível fazer login agora.';
       if (btn) btn.disabled = false;
@@ -3265,8 +3445,17 @@ projectForm?.addEventListener('submit', async e => {
       email: user.email || 'sem-email'
     });
 
+    window.wffTrackAetEvent?.('aet_project_form_success', {
+      aet_stage: 'conversao',
+      aet_step: 'projeto_salvo'
+    });
     projectPromptStatus.textContent = 'Enviado!';
   } catch (error) {
+    window.wffTrackAetEvent?.('aet_project_form_error', {
+      aet_stage: 'conversao',
+      aet_step: 'erro_salvar_projeto',
+      error_name: error.name || 'Error'
+    });
     console.error('Erro Firebase:', error);
     projectPromptStatus.textContent = 'Erro de rede, mas vamos prosseguir...';
   }
@@ -3286,6 +3475,11 @@ let currentAboutStep = 0;
 const aboutNextAudio = new Audio('./assets/folhaspassando.mp3');
 
 function nextAboutStep() {
+    window.wffTrackAetEvent?.('aet_about_next_step', {
+        aet_stage: 'confianca',
+        aet_step: 'sobre_avancado',
+        about_step_index: currentAboutStep
+    });
     aboutNextAudio.currentTime = 0;
     aboutNextAudio.play().catch(error => {
         console.warn('Não foi possível reproduzir o áudio do botão avançar:', error);
