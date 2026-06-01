@@ -1,5 +1,7 @@
 <script>
 (function() {
+    const isRestoringCompletedFlow = Boolean(window.wffHydratingCompletedFlow);
+
     // 0. Verificação de Existência (Evita duplicados)
     if (document.getElementById('aet-cycle')) return;
 
@@ -128,7 +130,7 @@
             const line = document.createElement('div');
             line.className = 'cycle-line';
             container.appendChild(line);
-            setTimeout(() => line.style.height = '25px', 100);
+            setTimeout(() => line.style.height = '25px', isRestoringCompletedFlow ? 0 : 100);
         }
 
         const item = document.createElement('div');
@@ -142,13 +144,13 @@
         `;
         
         container.appendChild(item);
-        setTimeout(() => item.classList.add('visible'), 100);
+        setTimeout(() => item.classList.add('visible'), isRestoringCompletedFlow ? 0 : 100);
 
         currentIdx++;
         if (currentIdx < etapas.length) {
-            setTimeout(renderNext, 8000); // Reduzi para 8s para ser levemente mais dinâmico
+            setTimeout(renderNext, isRestoringCompletedFlow ? 0 : 8000); // Reduzi para 8s para ser levemente mais dinâmico
         } else {
-            setTimeout(() => window.wffCompleteModoFlow?.('./modo/entropia.html'), 900);
+            setTimeout(() => window.wffCompleteModoFlow?.('./modo/entropia.html'), isRestoringCompletedFlow ? 0 : 900);
         }
     }
 

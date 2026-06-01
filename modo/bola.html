@@ -1,5 +1,6 @@
 <script>
 (function () {
+  const isRestoringCompletedFlow = Boolean(window.wffHydratingCompletedFlow);
   const currentScript = document.currentScript;
   const animationStyleId = 'aet-ball-animation-styles';
   const cardStyleId = 'aet-ball-card-styles';
@@ -154,6 +155,48 @@
     `
   );
 
+  function revealCostData(options = {}) {
+    const instant = Boolean(options.instant);
+    const cards = document.querySelectorAll('.card');
+
+    cards.forEach((card, index) => {
+      const custoPlanilha = card.dataset.custos || '';
+      const [criacao, publicacao, manutencao] = parseCostBreakdown(custoPlanilha);
+
+      let dataDiv = card.querySelector('.column-j-data');
+      if (!dataDiv) {
+        dataDiv = document.createElement('div');
+        dataDiv.className = 'column-j-data aet-pending';
+
+        const actions = card.querySelector('.actions');
+        actions ? actions.insertAdjacentElement('afterend', dataDiv) : card.appendChild(dataDiv);
+      }
+
+      dataDiv.innerHTML = `
+        <div class="j-row"><span>CRIAÇÃO:</span> <span class="j-val">${criacao}</span></div>
+        <div class="j-row"><span>PUBLICAÇÃO:</span> <span class="j-val">${publicacao}</span></div>
+        <div class="j-row"><span>MANUTENÇÃO:</span> <span class="j-val">${manutencao}</span></div>
+      `;
+
+      setTimeout(() => {
+        dataDiv.classList.remove('aet-pending');
+        dataDiv.classList.add('aet-reveal');
+      }, instant ? 0 : 200 + (index * 150));
+    });
+
+    const revealDuration = instant ? 0 : 200 + (Math.max(0, cards.length - 1) * 150) + 650;
+
+    setTimeout(() => {
+      window.wffCompleteModoFlow?.('./modo/bola.html');
+      cleanupAnimationArtifacts();
+    }, instant ? 0 : Math.max(1500, revealDuration));
+  }
+
+  if (isRestoringCompletedFlow) {
+    revealCostData({ instant: true });
+    return;
+  }
+
   const overlay = document.getElementById('project-prompt-overlay');
   if (!overlay) return;
   overlay.classList.add('aet-ball-active');
@@ -243,41 +286,7 @@
     splatter.classList.add('retract');
 
     // Inicia a animação nos cards
-    const cards = document.querySelectorAll('.card');
-    cards.forEach((card, index) => {
-      const custoPlanilha = card.dataset.custos || '';
-      const [criacao, publicacao, manutencao] = parseCostBreakdown(custoPlanilha);
-
-      // Cria o elemento se não existir
-      let dataDiv = card.querySelector('.column-j-data');
-      if (!dataDiv) {
-        dataDiv = document.createElement('div');
-        dataDiv.className = 'column-j-data aet-pending';
-
-        const actions = card.querySelector('.actions');
-        actions ? actions.insertAdjacentElement('afterend', dataDiv) : card.appendChild(dataDiv);
-      }
-
-      dataDiv.innerHTML = `
-        <div class="j-row"><span>CRIAÇÃO:</span> <span class="j-val">${criacao}</span></div>
-        <div class="j-row"><span>PUBLICAÇÃO:</span> <span class="j-val">${publicacao}</span></div>
-        <div class="j-row"><span>MANUTENÇÃO:</span> <span class="j-val">${manutencao}</span></div>
-      `;
-
-      // Delay cascata para os cards aparecerem
-      setTimeout(() => {
-        dataDiv.classList.remove('aet-pending');
-        dataDiv.classList.add('aet-reveal');
-      }, 200 + (index * 150));
-    });
-
-    // Finaliza e limpa tudo
-    const revealDuration = 200 + (Math.max(0, cards.length - 1) * 150) + 650;
-
-    setTimeout(() => {
-      window.wffCompleteModoFlow?.('./modo/bola.html');
-      cleanupAnimationArtifacts();
-    }, Math.max(1500, revealDuration));
+    revealCostData();
   };
 
   updatePhysics();

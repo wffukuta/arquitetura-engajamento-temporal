@@ -1,5 +1,6 @@
 <script>
 (function() {
+    const isRestoringCompletedFlow = Boolean(window.wffHydratingCompletedFlow);
     const header = document.querySelector('header');
     const heroContent = document.querySelector('.hero-content');
     const h1 = header ? header.querySelector('h1') : null;
@@ -37,7 +38,9 @@
         if (animationStarted) return;
         animationStarted = true;
         startTime = Date.now();
-        playBloomSound();
+        if (!isRestoringCompletedFlow) {
+            playBloomSound();
+        }
 
         if (completionTimerId) {
             clearTimeout(completionTimerId);
@@ -228,6 +231,9 @@
     });
 
     init();
+    if (isRestoringCompletedFlow) {
+        triggerRelease();
+    }
     animate();
 
 })();
